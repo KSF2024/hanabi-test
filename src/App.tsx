@@ -19,6 +19,8 @@ export default function App(){
         // 画像を読み込み、canvasに描画
         const img = new Image();
         img.onload = () => {
+            canvas.width = img.width; // Canvasの幅を画像の幅に設定
+            canvas.height = img.height; // Canvasの高さを画像の高さに設定
             ctx.drawImage(img, 0, 0);
     
             // ImageDataオブジェクトを取得
@@ -32,8 +34,7 @@ export default function App(){
         const color: string = `rgba(${star.color.red}, ${star.color.green}, ${star.color.blue}, ${star.color.alpha})`
         ctx.fillStyle = color;
         ctx.beginPath();
-        // ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.arc(star.x + 10, star.y + 10, star.radius, 0, Math.PI * 2);
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -44,7 +45,7 @@ export default function App(){
     useEffect(() => {
         console.log({imageData})
         if(imageData){
-            const newStars: Star[] = generateStars(imageData, 1, 1)
+            const newStars: Star[] = generateStars(imageData, 5, 3)
             setStars(newStars)
         }
     }, [imageData])
@@ -66,7 +67,7 @@ export default function App(){
 
     return (
         <>
-            <canvas ref={canvasRef} width={400} height={400} />
+            <canvas ref={canvasRef} width={1000} height={1000} />
         </>
     )
 }
