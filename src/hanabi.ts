@@ -1,6 +1,4 @@
-import reactLogo from './assets/react.svg'
-
-type Star = {
+export type Star = {
     color: {
         red: number
         green: number
