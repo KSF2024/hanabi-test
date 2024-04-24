@@ -2,8 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import kawaharaLogo from './assets/kawahara.png';
 import { generateStars, Star } from './hanabi';
 
-let isFinished: boolean = false;
-
 export default function App(){
     /* 状態管理 */
     const [imageData, setImageData] = useState<ImageData | null>(null); // 読み込む画像データ
@@ -15,6 +13,7 @@ export default function App(){
     const [fireworkHeight, setFireworkHeight] = useState<number>(0); // 花火の高さ
 
     const [animationFrameId, setAnimationFrameId] = useState<number | null>(null); // 花火アニメーション用ID
+    const isFinishedAnimation = useRef<boolean>(true); // 花火アニメーションが終了したかどうか
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
@@ -71,7 +70,7 @@ export default function App(){
                 return {...star, x: newX, y: newY};
             });
 
-            isFinished = prevStars.every((star, index) => {
+            isFinishedAnimation.current = prevStars.every((star, index) => {
                 const renderingStar: Star = renderingStars[index];
                 const dx: number = (renderingStar.x - star.x + fireworkWidth / 2) / speed;
                 const dy: number = (renderingStar.y - star.y + fireworkHeight / 2) / speed;
@@ -85,9 +84,9 @@ export default function App(){
             return updatedStars;
         });
 
-        console.log(isFinished)
+        console.log(isFinishedAnimation.current)
 
-        if(isFinished){
+        if(isFinishedAnimation.current){
             // 花火のアニメーションが終了したら、アニメーションを停止する
             return;
         }else{
@@ -128,10 +127,12 @@ export default function App(){
 
             // アニメーションを開始
             setAnimationFrameId(requestAnimationFrame(() => animateStars(initializedStars)));
+            isFinishedAnimation.current = false;
         }
         // アンマウント時にアニメーションを停止
         return () => {
             if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            isFinishedAnimation.current = true;
         };
     }, [imageData]);
 
