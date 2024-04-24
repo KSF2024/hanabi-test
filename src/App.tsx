@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import kawaharaLogo from './assets/kawahara.png';
+import testImage from './assets/computer_laptop.png';
+// import testImage from './assets/kawahara.png';
 import { generateStars, Star } from './hanabi';
 
 export default function App(){
@@ -17,7 +18,7 @@ export default function App(){
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
-    function getImageData(image: string = kawaharaLogo) {
+    function getImageData(image: string = testImage) {
         // canvas要素を作成
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -36,7 +37,7 @@ export default function App(){
             setFireworkHeight(img.height);
 
             // ImageDataオブジェクトを取得
-            setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            setImageData(ctx.getImageData(0, 0, img.width, img.height));
         };
         img.src = image;
     }
@@ -51,7 +52,7 @@ export default function App(){
     }
 
     // アニメーションのフレーム毎の処理
-    function animateStars(currentStars: Star[]){
+    function animateStars(initialX: number, initialY: number){
         if(!starsRef.current) return;
         const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
         const speed: number = 10;
@@ -60,16 +61,19 @@ export default function App(){
             // 新しいスターの位置を計算して更新
             const updatedStars = prevStars.map((star, index) => {
                 const renderingStar: Star = renderingStars[index];
+                const renderingX: number = renderingStar.x - fireworkWidth / 2 + initialX
+                const renderingY: number = renderingStar.y - fireworkHeight / 2 + initialY
 
                 /* ここを改変することで、花火のモーションを変更できる */
-                const dx: number = (renderingStar.x - star.x + fireworkWidth / 2) / speed;
-                const dy: number = (renderingStar.y - star.y + fireworkHeight / 2) / speed;
+                const dx: number = (renderingX - star.x) / speed;
+                const dy: number = (renderingY - star.y) / speed;
                 const newX: number = star.x + dx;
                 const newY: number = star.y + dy;
 
                 return {...star, x: newX, y: newY};
             });
 
+            // 加速度が0に近づいたら、アニメーションを停止する
             isFinishedAnimation.current = prevStars.every((star, index) => {
                 const renderingStar: Star = renderingStars[index];
                 const dx: number = (renderingStar.x - star.x + fireworkWidth / 2) / speed;
@@ -84,14 +88,13 @@ export default function App(){
             return updatedStars;
         });
 
-        console.log(isFinishedAnimation.current)
-
+        // return
         if(isFinishedAnimation.current){
             // 花火のアニメーションが終了したら、アニメーションを停止する
             return;
         }else{
             // 次のフレームを要求
-            setAnimationFrameId(requestAnimationFrame(() => animateStars(currentStars)));
+            setAnimationFrameId(requestAnimationFrame(() => animateStars(initialX, initialY)));
         }
     }
 
@@ -126,7 +129,7 @@ export default function App(){
             setStars(initializedStars);
 
             // アニメーションを開始
-            setAnimationFrameId(requestAnimationFrame(() => animateStars(initializedStars)));
+            setAnimationFrameId(requestAnimationFrame(() => animateStars(initialX, initialY)));
             isFinishedAnimation.current = false;
         }
         // アンマウント時にアニメーションを停止
@@ -156,6 +159,13 @@ export default function App(){
     }, [stars]);
 
     return (
-        <canvas ref={canvasRef} width={500} height={500}/>
+        <canvas
+            ref={canvasRef}
+            width={500}
+            height={500}
+            style={{
+                border: "black 1px solid"
+            }}
+        />
     );
 }
