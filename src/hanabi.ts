@@ -10,7 +10,7 @@ export type Star = {
     radius: number
 }
 
-export function generateStars(imageData: ImageData, interval: number, radius: number): Star[]{
+export function generateStars(imageData: ImageData, interval: number = 10, radius: number = 5): Star[]{
     const stars: Star[] = [];
     const data = imageData.data;
 
