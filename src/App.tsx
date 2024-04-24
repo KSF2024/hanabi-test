@@ -105,25 +105,18 @@ export default function App(){
     // 花火が消えていくアニメーション
     function fadeFireworks(){
         if(!starsRef.current) return;
-        const speed: number = 2;
+        const speed: number = 0.5;
 
         setStars((prevStars) => {
-            // 新しいスターの透明度を計算して更新
+            // 新しい花火の星のの透明度を計算して更新
             const updatedStars = prevStars.map((star) => {
-                const newAlpha: number = star.color.alpha - 1;
-                const fixedNewAlpha: number = (newAlpha > 0) ? newAlpha : 0;
-                // if(star.color.alpha > 0) console.log(star.color.alpha)
-                return {...star, color: {
-                    alpha: fixedNewAlpha,
-                    red: star.color.red,
-                    green: star.color.green,
-                    blue: star.color.blue
-                }};
+                const newAlpha: number = Math.max(star.color.alpha - speed, 0); // 透明度が負にならないようにする
+                return {...star, color: {...star.color, alpha: newAlpha}};
             });
 
             isFinishedAnimation.current = prevStars.every((star) => {
-                const newAlpha: number = star.color.alpha - speed;
-                return (newAlpha < 0);
+                // 全ての花火の星の透明度が0以下になったらアニメーションを停止
+                return star.color.alpha <= 0;
             })
 
             return updatedStars;
