@@ -51,8 +51,8 @@ export default function App(){
         ctx.fill();
     }
 
-    // アニメーションのフレーム毎の処理
-    function animateStars(initialX: number, initialY: number){
+    // 花火を爆発させるアニメーション
+    function burstStars(initialX: number, initialY: number){
         if(!starsRef.current) return;
         const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
         const speed: number = 10;
@@ -78,27 +78,61 @@ export default function App(){
                 const renderingStar: Star = renderingStars[index];
                 const dx: number = (renderingStar.x - star.x + fireworkWidth / 2) / speed;
                 const dy: number = (renderingStar.y - star.y + fireworkHeight / 2) / speed;
-                if(Math.abs(dx) < 1 && Math.abs(dy) < 1){
-                    return true;
-                }else{
-                    return false;
-                }
+                return (Math.abs(dx) < 1 && Math.abs(dy) < 1);
             })
 
             return updatedStars;
         });
 
-        // return
         if(isFinishedAnimation.current){
             // 花火のアニメーションが終了したら、アニメーションを停止する
             return;
         }else{
             // 次のフレームを要求
-            setAnimationFrameId(requestAnimationFrame(() => animateStars(initialX, initialY)));
+            setAnimationFrameId(requestAnimationFrame(() => burstStars(initialX, initialY)));
         }
     }
 
-    // 花火の星データ(花火が咲いた後)から、アニメーション開始時の花火の星(中央に集合した状態)のデータを取得する関数
+    // 花火が消えていくアニメーション
+    function fadeFireworks(){
+        if(!starsRef.current) return;
+        const speed: number = 2;
+
+        setStars((prevStars) => {
+            // 新しいスターの透明度を計算して更新
+            const updatedStars = prevStars.map((star) => {
+                const newAlpha: number = star.color.alpha - 1;
+                // const fixedNewAlpha: number = (newAlpha < 0) ? 0 : newAlpha;
+                const fixedNewAlpha: number = newAlpha;
+                if(star.color.alpha > 0) console.log(star.color.alpha)
+                return {...star, color: {
+                    alpha: fixedNewAlpha,
+                    red: star.color.red,
+                    green: star.color.green,
+                    blue: star.color.blue
+                }};
+            });
+
+            isFinishedAnimation.current = prevStars.every((star) => {
+                const newAlpha: number = star.color.alpha - speed;
+                return (newAlpha < 0);
+            })
+
+            return updatedStars;
+        });
+
+        // console.log(isFinishedAnimation.current)
+
+        if(isFinishedAnimation.current){
+            // 花火のアニメーションが終了したら、アニメーションを停止する
+            return;
+        }else{
+            // 次のフレームを要求
+            setAnimationFrameId(requestAnimationFrame(fadeFireworks));
+        }
+    }
+
+    // 花火の星データ(花火が爆発した後)から、アニメーション開始時の花火の星(中央に集合した状態)のデータを取得する関数
     function initializeStars(stars: Star[], initialX: number, initialY: number): Star[]{
         return stars.map((star) => {
             return {...star, x: initialX, y: initialY}
@@ -129,7 +163,7 @@ export default function App(){
             setStars(initializedStars);
 
             // アニメーションを開始
-            setAnimationFrameId(requestAnimationFrame(() => animateStars(initialX, initialY)));
+            setAnimationFrameId(requestAnimationFrame(() => burstStars(initialX, initialY)));
             isFinishedAnimation.current = false;
         }
         // アンマウント時にアニメーションを停止
@@ -159,13 +193,20 @@ export default function App(){
     }, [stars]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            width={500}
-            height={500}
-            style={{
-                border: "black 1px solid"
-            }}
-        />
+        <>
+            <canvas
+                ref={canvasRef}
+                width={500}
+                height={500}
+                style={{
+                    border: "black 1px solid"
+                }}
+            />
+            <button onClick={() => {
+                // アニメーションを開始
+                setAnimationFrameId(requestAnimationFrame(fadeFireworks));
+                isFinishedAnimation.current = false;
+            }}>花火消滅</button>
+        </>
     );
 }
