@@ -13,6 +13,7 @@ export default function App() {
     const [fireworkHeight, setFireworkHeight] = useState<number>(0); // 花火の高さ
 
     const [animationFrameId, setAnimationFrameId] = useState<number | null>(null); // 花火アニメーション用ID
+    const [enableAnimation, setEnableAnimation] = useState<boolean>(false); // アニメーションが流れているかどうか
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
@@ -53,6 +54,7 @@ export default function App() {
     function animateStars(){
         if(!starsRef.current) return;
         const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
+        let isFinished: boolean = false;
 
         setStars((prevStars) => {
             // 新しいスターの位置を計算して更新
@@ -68,26 +70,28 @@ export default function App() {
 
                 return {...star, x: newX, y: newY};
             });
+
+            // 花火に動きがない(花火が咲き終わった)場合、アニメーションを停止する
+            isFinished = updatedStars.every((star, index) => {
+                if((Math.abs(prevStars[index].x - star.x) < 1) && (Math.abs(prevStars[index].y - star.y) < 1)){
+                    return true;
+                }else{
+                    return false;
+                }
+            });
+            setEnableAnimation(isFinished);
+
             return updatedStars;
         });
+        console.log(enableAnimation)
 
-        const isFinished: boolean = stars.every((star, index) => {
-            return false;
-            // if(!starsRef.current) return false;
-            // const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
-            // const renderingStar: Star = renderingStars[index];
-
-            // if((Math.abs(renderingStar.x - star.x) < 10) && (Math.abs(renderingStar.y - star.y) < 10)){
-            //     console.log({x1: renderingStar.x, x2: star.x, y1: renderingStar.y, y2: star.y})
-            //     return false;
-            // }else{
-            //     return false;
-            // }
-        });
-        console.log({isFinished})
-
-        // 次のフレームを要求
-        setAnimationFrameId(requestAnimationFrame(animateStars));
+        if(enableAnimation){
+            // 花火のアニメーションが終了したら、アニメーションを停止する
+            return;
+        }else{
+            // 次のフレームを要求
+            setAnimationFrameId(requestAnimationFrame(animateStars));
+        }
     }
 
     // 花火の星データ(花火が咲いた後)から、アニメーション開始時の花火の星(中央に集合した状態)のデータを取得する関数
@@ -125,7 +129,7 @@ export default function App() {
         }
         // アンマウント時にアニメーションを停止
         return () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, [imageData]);
 
