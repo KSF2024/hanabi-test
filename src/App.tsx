@@ -51,7 +51,7 @@ export default function App(){
             typeof star.color.blue === "number" && 
             typeof star.color.alpha === "number"
         ){
-            color = `rgba(${star.color.red}, ${star.color.green}, ${star.color.blue}, ${star.color.alpha})`;
+            color = `rgba(${[star.color.red, star.color.green, star.color.blue, star.color.alpha / 255]})`;
         }
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -60,7 +60,7 @@ export default function App(){
     }
 
     // 花火を爆発させるアニメーション
-    function burstStars(initialX: number, initialY: number){
+    function burstFireworks(initialX: number, initialY: number){
         if(!starsRef.current) return;
         const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
         const speed: number = 10;
@@ -98,19 +98,19 @@ export default function App(){
             return;
         }else{
             // 次のフレームを要求
-            setAnimationFrameId(requestAnimationFrame(() => burstStars(initialX, initialY)));
+            setAnimationFrameId(requestAnimationFrame(() => burstFireworks(initialX, initialY)));
         }
     }
 
     // 花火が消えていくアニメーション
     function fadeFireworks(){
         if(!starsRef.current) return;
-        const speed: number = 0.5;
+        const speed: number = 10;
 
         setStars((prevStars) => {
             // 新しい花火の星のの透明度を計算して更新
             const updatedStars = prevStars.map((star) => {
-                const newAlpha: number = Math.max(star.color.alpha - speed, 0); // 透明度が負にならないようにする
+                const newAlpha: number = Math.max(Math.round(star.color.alpha - speed), 0); // 透明度が負にならないようにする
                 return {...star, color: {...star.color, alpha: newAlpha}};
             });
 
@@ -121,8 +121,6 @@ export default function App(){
 
             return updatedStars;
         });
-
-        // console.log(isFinishedAnimation.current)
 
         if(isFinishedAnimation.current){
             // 花火のアニメーションが終了したら、アニメーションを停止する
@@ -165,7 +163,7 @@ export default function App(){
             setStars(initializedStars);
 
             // アニメーションを開始
-            setAnimationFrameId(requestAnimationFrame(() => burstStars(initialX, initialY)));
+            setAnimationFrameId(requestAnimationFrame(() => burstFireworks(initialX, initialY)));
             isFinishedAnimation.current = false;
         }
         // アンマウント時にアニメーションを停止
@@ -209,9 +207,6 @@ export default function App(){
                 setAnimationFrameId(requestAnimationFrame(fadeFireworks));
                 isFinishedAnimation.current = false;
             }}>花火消滅</button>
-            <button onClick={() => {
-                console.log(stars)
-            }}>log</button>
         </>
     );
 }
