@@ -50,37 +50,44 @@ export default function App() {
     }
 
     // アニメーションのフレーム毎の処理
-    function animateStars(frameCount: number = 0, maxFrame: number = 300){
+    function animateStars(){
         if(!starsRef.current) return;
         const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
 
         setStars((prevStars) => {
             // 新しいスターの位置を計算して更新
             const updatedStars = prevStars.map((star, index) => {
-                // 花火の星の傾きを求める
                 const renderingStar: Star = renderingStars[index];
 
-                let newX: number = star.x;
-                const dx: number = (renderingStar.x - fireworkWidth / 2) / maxFrame;
-                newX += dx;
-
-                let newY: number = star.y;
-                const dy: number = (renderingStar.y - fireworkHeight / 2) / maxFrame;
-                newY += dy;
+                /* ここを改変することで、花火のモーションを変更できる */
+                const speed: number = 10;
+                const dx: number = (renderingStar.x - star.x + fireworkWidth / 2) / speed;
+                const dy: number = (renderingStar.y - star.y + fireworkHeight / 2) / speed;
+                const newX: number = star.x + dx;
+                const newY: number = star.y + dy;
 
                 return {...star, x: newX, y: newY};
             });
             return updatedStars;
         });
 
+        const isFinished: boolean = stars.every((star, index) => {
+            return false;
+            // if(!starsRef.current) return false;
+            // const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
+            // const renderingStar: Star = renderingStars[index];
+
+            // if((Math.abs(renderingStar.x - star.x) < 10) && (Math.abs(renderingStar.y - star.y) < 10)){
+            //     console.log({x1: renderingStar.x, x2: star.x, y1: renderingStar.y, y2: star.y})
+            //     return false;
+            // }else{
+            //     return false;
+            // }
+        });
+        console.log({isFinished})
+
         // 次のフレームを要求
-        console.log({frameCount, maxFrame})
-        if(frameCount >= maxFrame){
-            if(animationFrameId) cancelAnimationFrame(animationFrameId);
-        }else{
-            frameCount++;
-            setAnimationFrameId(requestAnimationFrame(() => animateStars(frameCount, maxFrame)));
-        }
+        setAnimationFrameId(requestAnimationFrame(animateStars));
     }
 
     // 花火の星データ(花火が咲いた後)から、アニメーション開始時の花火の星(中央に集合した状態)のデータを取得する関数
