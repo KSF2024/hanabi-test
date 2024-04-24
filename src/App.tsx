@@ -44,7 +44,15 @@ export default function App(){
 
     // starデータからキャンバスに点を描画する関数
     function drawStar(ctx: CanvasRenderingContext2D, star: Star) {
-        const color: string = `rgba(${star.color.red}, ${star.color.green}, ${star.color.blue}, ${star.color.alpha})`;
+        let color: string = "rgba(0, 0, 0, 0)";
+        if(
+            typeof star.color.red === "number" && 
+            typeof star.color.green === "number" && 
+            typeof star.color.blue === "number" && 
+            typeof star.color.alpha === "number"
+        ){
+            color = `rgba(${star.color.red}, ${star.color.green}, ${star.color.blue}, ${star.color.alpha})`;
+        }
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
@@ -86,6 +94,7 @@ export default function App(){
 
         if(isFinishedAnimation.current){
             // 花火のアニメーションが終了したら、アニメーションを停止する
+            setAnimationFrameId(null);
             return;
         }else{
             // 次のフレームを要求
@@ -102,9 +111,8 @@ export default function App(){
             // 新しいスターの透明度を計算して更新
             const updatedStars = prevStars.map((star) => {
                 const newAlpha: number = star.color.alpha - 1;
-                // const fixedNewAlpha: number = (newAlpha < 0) ? 0 : newAlpha;
-                const fixedNewAlpha: number = newAlpha;
-                if(star.color.alpha > 0) console.log(star.color.alpha)
+                const fixedNewAlpha: number = (newAlpha > 0) ? newAlpha : 0;
+                // if(star.color.alpha > 0) console.log(star.color.alpha)
                 return {...star, color: {
                     alpha: fixedNewAlpha,
                     red: star.color.red,
@@ -125,6 +133,7 @@ export default function App(){
 
         if(isFinishedAnimation.current){
             // 花火のアニメーションが終了したら、アニメーションを停止する
+            setAnimationFrameId(null);
             return;
         }else{
             // 次のフレームを要求
@@ -207,6 +216,9 @@ export default function App(){
                 setAnimationFrameId(requestAnimationFrame(fadeFireworks));
                 isFinishedAnimation.current = false;
             }}>花火消滅</button>
+            <button onClick={() => {
+                console.log(stars)
+            }}>log</button>
         </>
     );
 }
