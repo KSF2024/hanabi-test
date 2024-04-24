@@ -5,9 +5,14 @@ import { generateStars, Star } from './hanabi';
 export default function App() {
     /* 状態管理 */
     const [imageData, setImageData] = useState<ImageData | null>(null); // 読み込む画像データ
-    const [stars, setStars] = useState<Star[]>([]); // 花火の星
-    const [animationFrameId, setAnimationFrameId] = useState<number | null>(null); // 花火アニメーション用ID
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
+
+    const starsRef = useRef<Star[]>([]); // 花火の星(アニメーション完了後の位置)
+    const [stars, setStars] = useState<Star[]>([]); // 花火の星(アニメーション用)
+    const [fireworkWidth, setFireworkWidth] = useState<number>(0); // 花火の幅
+    const [fireworkHeight, setFireworkHeight] = useState<number>(0); // 花火の高さ
+
+    const [animationFrameId, setAnimationFrameId] = useState<number | null>(null); // 花火アニメーション用ID
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
@@ -20,9 +25,14 @@ export default function App() {
         // 画像を読み込み、canvasに描画
         const img = new Image();
         img.onload = () => {
-            canvas.width = img.width; // Canvasの幅を画像の幅に設定
-            canvas.height = img.height; // Canvasの高さを画像の高さに設定
+            // canvasの大きさをimageDataに合わせる
+            canvas.width = img.width;
+            canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
+
+            // imageDataの大きさを記録しておく
+            setFireworkWidth(img.width);
+            setFireworkHeight(img.height);
 
             // ImageDataオブジェクトを取得
             setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
@@ -40,24 +50,44 @@ export default function App() {
     }
 
     // アニメーションのフレーム毎の処理
-    function animateStars() {
+    function animateStars(frameCount: number = 0, maxFrame: number = 300){
+        if(!starsRef.current) return;
+        const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
+
         setStars((prevStars) => {
             // 新しいスターの位置を計算して更新
-            const updatedStars = prevStars.map((star) => {
-                const dx = imageData!.width / 2 - star.x; // X方向の移動距離
-                const dy = imageData!.height / 2 - star.y; // Y方向の移動距離
-                const distance = Math.sqrt(dx * dx + dy * dy); // 中心からの距離
-                const speed = Math.min(0.05 * distance, 10); // 移動速度を制限
-                const angle = Math.atan2(dy, dx); // 移動方向の角度
-                const newX = star.x + Math.cos(angle) * speed; // 新しいX座標
-                const newY = star.y + Math.sin(angle) * speed; // 新しいY座標
-                return { ...star, x: newX, y: newY };
+            const updatedStars = prevStars.map((star, index) => {
+                // 花火の星の傾きを求める
+                const renderingStar: Star = renderingStars[index];
+
+                let newX: number = star.x;
+                const dx: number = (renderingStar.x - fireworkWidth / 2) / maxFrame;
+                newX += dx;
+
+                let newY: number = star.y;
+                const dy: number = (renderingStar.y - fireworkHeight / 2) / maxFrame;
+                newY += dy;
+
+                return {...star, x: newX, y: newY};
             });
             return updatedStars;
         });
 
         // 次のフレームを要求
-        setAnimationFrameId(requestAnimationFrame(animateStars));
+        console.log({frameCount, maxFrame})
+        if(frameCount >= maxFrame){
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+        }else{
+            frameCount++;
+            setAnimationFrameId(requestAnimationFrame(() => animateStars(frameCount, maxFrame)));
+        }
+    }
+
+    // 花火の星データ(花火が咲いた後)から、アニメーション開始時の花火の星(中央に集合した状態)のデータを取得する関数
+    function initializeStars(stars: Star[], initialX: number, initialY: number): Star[]{
+        return stars.map((star) => {
+            return {...star, x: initialX, y: initialY}
+        });
     }
 
     /* useEffect */
@@ -71,7 +101,17 @@ export default function App() {
         if (imageData) {
             // imageDataから花火の星を作成する
             const newStars: Star[] = generateStars(imageData);
-            setStars(newStars);
+            starsRef.current = newStars;
+
+            // 作成した花火の星を中央に集める
+            let initialX: number =  0;
+            let initialY: number =  0;
+            if(canvasRef.current){
+                initialX = canvasRef.current.width / 2;
+                initialY = canvasRef.current.height / 2;
+            }
+            const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
+            setStars(initializedStars);
 
             // アニメーションを開始
             setAnimationFrameId(requestAnimationFrame(animateStars));
@@ -102,6 +142,6 @@ export default function App() {
     }, [stars]);
 
     return (
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} width={500} height={500}/>
     );
 }
