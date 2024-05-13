@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import testImage from './assets/computer_laptop.png';
+// import testImage from './assets/game_icon.png';
+// import testImage from './assets/game_icon2.png';
+import testImage from './assets/game_icon3.png';
+// import testImage from './assets/computer_laptop.png';
 // import testImage from './assets/kawahara.png';
 import { generateStars, Star } from './hanabi';
 
