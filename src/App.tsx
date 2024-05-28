@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-// import testImage from './assets/game_icon.png';
 // import testImage from './assets/computer_laptop.png';
-import testImage from './assets/kawahara.png';
+// import testImage from './assets/game_icon.png';
+import testImage from './assets/ai_icon.png';
+// import testImage from './assets/kawahara.png';
 import { generateStars, Star } from './hanabi';
 
 export default function App(){
@@ -28,26 +29,25 @@ export default function App(){
         // 画像を読み込み、canvasに描画
         const img = new Image();
         img.onload = () => {
-            // 元の画像の大きさ
+            // 元の画像の比率を保持したまま横幅を300pxに設定
             const originalWidth = img.width;
             const originalHeight = img.height;
-
-            // 新しい横幅と高さを計算
             const newWidth = 300;
             const newHeight = (originalHeight * newWidth) / originalWidth;
-            console.log({newHeight})
 
             // canvasの大きさを新しい大きさに合わせる
             canvas.width = newWidth;
             canvas.height = newHeight;
+
+            // 画像のリサイズと中心点の調整をして描画
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
             // imageDataの大きさを記録しておく
-            setFireworkWidth(img.width);
-            setFireworkHeight(img.height);
+            setFireworkWidth(newWidth);
+            setFireworkHeight(newHeight);
 
             // ImageDataオブジェクトを取得
-            setImageData(ctx.getImageData(0, 0, img.width, img.height));
+            setImageData(ctx.getImageData(0, 0, newWidth, newHeight));
         };
         img.src = image;
     }
@@ -205,9 +205,10 @@ export default function App(){
     return (
         <>
             <canvas
+                id="canvas"
                 ref={canvasRef}
-                width={500}
-                height={500}
+                width={300}
+                height={300}
                 style={{
                     border: "black 1px solid"
                 }}
