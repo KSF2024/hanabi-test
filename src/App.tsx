@@ -70,6 +70,27 @@ export default function App(){
         ctx.fill();
     }
 
+    // 画像データを読み込み、花火を爆発させるアニメーションを開始する
+    function startAnimation(imageData: ImageData){
+        // imageDataから花火の星を作成する
+        const newStars: Star[] = generateStars(imageData);
+        starsRef.current = newStars;
+
+        // 作成した花火の星を中央に集める
+        let initialX: number =  0;
+        let initialY: number =  0;
+        if(canvasRef.current){
+            initialX = canvasRef.current.width / 2;
+            initialY = canvasRef.current.height / 2;
+        }
+        const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
+        setStars(initializedStars);
+
+        // アニメーションを開始
+        setAnimationFrameId(requestAnimationFrame(() => burstFireworks(initialX, initialY)));
+        isFinishedAnimation.current = false;
+    }
+
     // 花火を爆発させるアニメーション
     function burstFireworks(initialX: number, initialY: number){
         if(!starsRef.current) return;
@@ -160,23 +181,7 @@ export default function App(){
     // imageDataが取得出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
         if (imageData) {
-            // imageDataから花火の星を作成する
-            const newStars: Star[] = generateStars(imageData);
-            starsRef.current = newStars;
-
-            // 作成した花火の星を中央に集める
-            let initialX: number =  0;
-            let initialY: number =  0;
-            if(canvasRef.current){
-                initialX = canvasRef.current.width / 2;
-                initialY = canvasRef.current.height / 2;
-            }
-            const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
-            setStars(initializedStars);
-
-            // アニメーションを開始
-            setAnimationFrameId(requestAnimationFrame(() => burstFireworks(initialX, initialY)));
-            isFinishedAnimation.current = false;
+            startAnimation(imageData);
         }
         // アンマウント時にアニメーションを停止
         return () => {
@@ -209,8 +214,8 @@ export default function App(){
             <canvas
                 id="canvas"
                 ref={canvasRef}
-                width={300}
-                height={300}
+                width={320}
+                height={320}
                 style={{
                     border: "black 1px solid"
                 }}
@@ -224,6 +229,12 @@ export default function App(){
                     isFinishedAnimation.current = false;
                 }}
             >花火消滅</button>
+            <button
+                style={{backgroundColor: "#0d6efd", color: "white"}}
+                onClick={() => {
+                    if(imageData) startAnimation(imageData);
+                }}
+            >花火再打ち上げ</button>
             <br/>
             <input
                 type="file"
