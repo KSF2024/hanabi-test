@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 // import testImage from './assets/computer_laptop.png';
 // import testImage from './assets/game_icon.png';
-import testImage from './assets/ai_icon.png';
-// import testImage from './assets/kawahara.png';
+// import testImage from './assets/ai_icon.png';
+import testImage from './assets/kawahara.png';
 import { generateStars, Star } from './hanabi';
 
 export default function App(){
     /* 状態管理 */
+    const [imageSrc, setImageSrc]= useState<string>(testImage);
     const [imageData, setImageData] = useState<ImageData | null>(null); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
 
@@ -20,7 +21,7 @@ export default function App(){
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
-    function getImageData(image: string = testImage) {
+    function getImageData(image: string) {
         // canvas要素を作成
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -152,8 +153,9 @@ export default function App(){
     /* useEffect */
     // 画像データからimageDataを取得する
     useEffect(() => {
-        getImageData();
-    }, []);
+        console.log(imageSrc)
+        getImageData(imageSrc);
+    }, [imageSrc]);
 
     // imageDataが取得出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
@@ -213,11 +215,39 @@ export default function App(){
                     border: "black 1px solid"
                 }}
             />
-            <button onClick={() => {
-                // アニメーションを開始
-                setAnimationFrameId(requestAnimationFrame(fadeFireworks));
-                isFinishedAnimation.current = false;
-            }}>花火消滅</button>
+            <br/>
+            <button
+                style={{backgroundColor: "#0d6efd", color: "white"}}
+                onClick={() => {
+                    // アニメーションを開始
+                    setAnimationFrameId(requestAnimationFrame(fadeFireworks));
+                    isFinishedAnimation.current = false;
+                }}
+            >花火消滅</button>
+            <br/>
+            <input
+                type="file"
+                accept="image/png, image/jpeg"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    // 入力されたファイルを読み込む
+                    const files = event.currentTarget.files;
+                    if (!files || files?.length === 0) return; // ファイルがなければ終了
+
+                    // 先頭のファイルを取得
+                    const file: File = files[0];
+
+                    // FileReaderを使ってファイルを読み込む
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const newImageSrc = e.target?.result;
+                        if(typeof newImageSrc === "string"){
+                            setImageSrc(newImageSrc);
+                            console.log(newImageSrc)
+                        }
+                    };
+                    reader.readAsDataURL(file);  // ファイルをData URLとして読み込む
+                }}
+            />
         </>
     );
 }
