@@ -72,6 +72,12 @@ export default function App(){
 
     // 画像データを読み込み、花火を爆発させるアニメーションを開始する
     function startAnimation(imageData: ImageData){
+        // 前回の花火打ち上げアニメーションを消去し、初期化する
+        if(animationFrameId){
+            cancelAnimationFrame(animationFrameId);
+            isFinishedAnimation.current = true;
+        }
+
         // imageDataから花火の星を作成する
         const newStars: Star[] = generateStars(imageData);
         starsRef.current = newStars;
