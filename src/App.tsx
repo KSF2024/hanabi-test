@@ -222,7 +222,6 @@ export default function App(){
             />
             <br/>
             <button
-                style={{backgroundColor: "#0d6efd", color: "white"}}
                 onClick={() => {
                     // アニメーションを開始
                     setAnimationFrameId(requestAnimationFrame(fadeFireworks));
@@ -230,11 +229,11 @@ export default function App(){
                 }}
             >花火消滅</button>
             <button
-                style={{backgroundColor: "#0d6efd", color: "white"}}
                 onClick={() => {
                     if(imageData) startAnimation(imageData);
                 }}
             >花火再打ち上げ</button>
+            <br/>
             <br/>
             <input
                 type="file"
