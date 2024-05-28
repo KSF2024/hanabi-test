@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 // import testImage from './assets/game_icon.png';
-// import testImage from './assets/game_icon2.png';
-import testImage from './assets/game_icon3.png';
 // import testImage from './assets/computer_laptop.png';
-// import testImage from './assets/kawahara.png';
+import testImage from './assets/kawahara.png';
 import { generateStars, Star } from './hanabi';
 
 export default function App(){
@@ -30,10 +28,19 @@ export default function App(){
         // 画像を読み込み、canvasに描画
         const img = new Image();
         img.onload = () => {
-            // canvasの大きさをimageDataに合わせる
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            // 元の画像の大きさ
+            const originalWidth = img.width;
+            const originalHeight = img.height;
+
+            // 新しい横幅と高さを計算
+            const newWidth = 300;
+            const newHeight = (originalHeight * newWidth) / originalWidth;
+            console.log({newHeight})
+
+            // canvasの大きさを新しい大きさに合わせる
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
             // imageDataの大きさを記録しておく
             setFireworkWidth(img.width);
