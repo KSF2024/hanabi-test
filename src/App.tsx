@@ -15,6 +15,7 @@ export default function App(){
     const [stars, setStars] = useState<Star[]>([]); // 花火の星(アニメーション用)
     const [fireworkWidth, setFireworkWidth] = useState<number>(0); // 花火の幅
     const [fireworkHeight, setFireworkHeight] = useState<number>(0); // 花火の高さ
+    const [launchAngle, setLaunchAngle] = useState<number>(0); // 花火の打ち上げ角度 (デフォルト90度)
 
     const [animationFrameId, setAnimationFrameId] = useState<number | null>(null); // 花火アニメーション用ID
     const isFinishedAnimation = useRef<boolean>(true); // 花火アニメーションが終了したかどうか
@@ -79,7 +80,7 @@ export default function App(){
         }
 
         // imageDataから花火の星を作成する
-        const newStars: Star[] = generateStars(imageData);
+        const newStars: Star[] = generateStars(imageData, launchAngle);
         starsRef.current = newStars;
 
         // 作成した花火の星を中央に集める
@@ -239,6 +240,17 @@ export default function App(){
                     if(imageData) startAnimation(imageData);
                 }}
             >花火再打ち上げ</button>
+            <br/>
+            <label>
+                打ち上げ角度: 
+                <input 
+                    type="number" 
+                    value={launchAngle} 
+                    onChange={(e) => setLaunchAngle(Number(e.target.value))} 
+                    min="0" 
+                    max="180" 
+                />
+            </label>
             <br/>
             <br/>
             <input
