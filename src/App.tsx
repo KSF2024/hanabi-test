@@ -221,6 +221,7 @@ export default function App(){
         <>
             <canvas
                 id="canvas"
+                className="bg-img-transparent"
                 ref={canvasRef}
                 width={320}
                 height={320}
