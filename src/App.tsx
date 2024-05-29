@@ -36,6 +36,7 @@ export default function App(){
             const originalHeight = img.height;
             const newWidth = 300;
             const newHeight = (originalHeight * newWidth) / originalWidth;
+            console.log(`${newWidth} × ${newHeight}`);
 
             // canvasの大きさを新しい大きさに合わせる
             canvas.width = newWidth;
