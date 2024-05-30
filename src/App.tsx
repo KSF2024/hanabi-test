@@ -30,7 +30,6 @@ export default function App(){
         height: number;
     }
     async function getImageData(image: string): Promise<ImageInfo>{
-        console.log("getImageData")
         return new Promise<ImageInfo>((resolve, _rejects) => {
             // canvas要素を作成
             const canvas = document.createElement('canvas');
@@ -39,7 +38,6 @@ export default function App(){
             // 画像を読み込み、canvasに描画
             const img = new Image();
             const newId: string = ulid();
-            console.log({newId})
             img.onload = () => {
                 if (!ctx) return;
 
@@ -48,7 +46,6 @@ export default function App(){
                 const originalHeight = img.height;
                 const newWidth = 300;
                 const newHeight = (originalHeight * newWidth) / originalWidth;
-                console.log(`${newWidth} × ${newHeight}`);
 
                 // canvasの大きさを新しい大きさに合わせる
                 canvas.width = newWidth;
@@ -66,7 +63,6 @@ export default function App(){
                     width: newWidth,
                     height: newHeight
                 };
-                console.log({result});
                 resolve(result);
             };
             img.src = image;
@@ -93,6 +89,7 @@ export default function App(){
 
         // imageDataから花火の星を作成する
         const newStars: Star[] = generateStars(imageData, launchAngle);
+        console.log({[id]: newStars})
         starsRef.current[id] = newStars;
 
         // 作成した花火の星を中央に集める
@@ -232,15 +229,18 @@ export default function App(){
     // fireworksIdをそれぞれ生成し、画像データからimageDataを取得する
     useEffect(() => {
         (async () => {
-            
             const importedImageData: ImageInfo[] = await Promise.all(imageSrc.map(async (value) => {
                 return await getImageData(value);
             }));
-            console.log({importedImageData})
+            const newImageDataObj: {[id: string]: ImageData} = {};
+            const newFireworkSizeObj: {[id: string]: {width: number, height: number}} = {};
             importedImageData.forEach(data => {
-                setImageDataObj(prev => Object.assign(prev, {[data.id]: data.imageData}));
-                setFireworkSizeObj(prev => Object.assign(prev, {width: data.width, height: data.height}));
+                const {id, imageData, width, height} = data;
+                newImageDataObj[id] = imageData;
+                newFireworkSizeObj[id] = {width, height};
             });
+            setImageDataObj(newImageDataObj);
+            setFireworkSizeObj(newFireworkSizeObj);
         })();
         return () => {
             setImageDataObj({});
@@ -249,7 +249,6 @@ export default function App(){
 
     // 花火IDの用意とimageDataの取得が出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
-        console.log({imageDataObj})
         Object.keys(imageDataObj).forEach(id => {
             if(imageDataObj[id]) {
                 startAnimation(id, imageDataObj[id]);
