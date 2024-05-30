@@ -9,7 +9,7 @@ import { ulid } from "ulidx";
 
 export default function App(){
     /* 状態管理 */
-    const [imageSrc, setImageSrc]= useState<string[]>([testImage, testImage2]);
+    const [imageSrc, setImageSrc]= useState<string[]>([testImage/* , testImage2 */]);
     const [imageDataObj, setImageDataObj] = useState<{[id: string]: ImageData}>({}); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
 
@@ -98,13 +98,14 @@ export default function App(){
         if(canvasRef.current){
             // 花火を打ち上げる中心点を求める
             initialY = canvasRef.current.height / 2;
-            if(Object.keys(imageDataObj).findIndex(value => value === id) === 0){
+            initialX = canvasRef.current.width / 2;
+            /* if(Object.keys(imageDataObj).findIndex(value => value === id) === 0){
                 initialX = canvasRef.current.width * 0.25;
             }else if(Object.keys(imageDataObj).findIndex(value => value === id) === 1){
                 initialX = canvasRef.current.width * 0.75;
             }else{
                 initialX = canvasRef.current.width / 2;
-            }
+            } */
         }
         const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
         setStarsObj(prev => ({ ...prev, [id]: initializedStars }));
@@ -141,8 +142,10 @@ export default function App(){
             // 加速度が0に近づいたら、アニメーションを停止する
             isFinishedAnimationObj.current[id] = prevStars[id].every((star, index) => {
                 const renderingStar: Star = renderingStars[index];
-                const dx: number = (renderingStar.x - star.x + fireworkSizeObj[id].width / 2) / speed;
-                const dy: number = (renderingStar.y - star.y + fireworkSizeObj[id].height / 2) / speed;
+                const renderingX: number = renderingStar.x - fireworkSizeObj[id].width / 2 + initialX
+                const renderingY: number = renderingStar.y - fireworkSizeObj[id].height / 2 + initialY
+                const dx: number = (renderingX - star.x) / speed;
+                const dy: number = (renderingY - star.y) / speed;
                 return (Math.abs(dx) < 1 && Math.abs(dy) < 1);
             })
 
@@ -151,12 +154,12 @@ export default function App(){
         });
 
         if(isFinishedAnimationObj.current[id]){
+            console.log("animation stopped")
             // 花火のアニメーションが終了したら、アニメーションを停止する
             setAnimationFrameIdObj(prev => {
                 const {removedId: id, ...newAnimationFrameId} = prev;
                 return newAnimationFrameId;
             });
-            console.log("stop burstFireworks"+"\n"+id);
             return;
         }else{
             // 次のフレームを要求
@@ -224,6 +227,7 @@ export default function App(){
             setImageDataObj(newImageDataObj);
             setFireworkSizeObj(newFireworkSizeObj);
         })();
+        console.log({imageSrc})
         return () => {
             setImageDataObj({});
         }
@@ -248,7 +252,7 @@ export default function App(){
 
     // starsが変更される度、再度キャンバスに描画する
     useEffect(() => {
-        console.log("redraw caused", {starsObj});
+        console.log("redraw caused");
         // Canvasコンテキストを取得
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -272,7 +276,7 @@ export default function App(){
                 id="canvas"
                 className="bg-img-transparent"
                 ref={canvasRef}
-                width={620}
+                width={/* 620 */320}
                 height={320}
                 style={{
                     border: "black 1px solid"
@@ -309,7 +313,9 @@ export default function App(){
             </label>
             <br/>
             <br/>
-            <input
+            {imageSrc.map((_value, index) => (
+                <input
+                key={index}
                 type="file"
                 accept="image/png, image/jpeg"
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,41 +332,17 @@ export default function App(){
                         const newImageSrc = e.target?.result;
                         if(typeof newImageSrc === "string"){
                             setImageSrc(prev => {
-                                prev[0] = newImageSrc;
-                                return prev;
+                                const newImageSrcArray = [...prev];
+                                newImageSrcArray[index] = newImageSrc;
+                                return newImageSrcArray;
                             });
-                            console.log(newImageSrc)
+                            // console.log(newImageSrc)
                         }
                     };
                     reader.readAsDataURL(file);  // ファイルをData URLとして読み込む
                 }}
             />
-            <input
-                type="file"
-                accept="image/png, image/jpeg"
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    // 入力されたファイルを読み込む
-                    const files = event.currentTarget.files;
-                    if (!files || files?.length === 0) return; // ファイルがなければ終了
-
-                    // 先頭のファイルを取得
-                    const file: File = files[0];
-
-                    // FileReaderを使ってファイルを読み込む
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const newImageSrc = e.target?.result;
-                        if(typeof newImageSrc === "string"){
-                            setImageSrc(prev => {
-                                prev[1] = newImageSrc;
-                                return prev;
-                            });
-                            console.log(newImageSrc)
-                        }
-                    };
-                    reader.readAsDataURL(file);  // ファイルをData URLとして読み込む
-                }}
-            />
+            ))}
         </>
     );
 }
