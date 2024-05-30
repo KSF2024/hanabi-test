@@ -99,13 +99,13 @@ export default function App(){
             // 花火を打ち上げる中心点を求める
             initialY = canvasRef.current.height / 2;
             initialX = canvasRef.current.width / 2;
-            /* if(Object.keys(imageDataObj).findIndex(value => value === id) === 0){
-                initialX = canvasRef.current.width * 0.25;
-            }else if(Object.keys(imageDataObj).findIndex(value => value === id) === 1){
-                initialX = canvasRef.current.width * 0.75;
-            }else{
-                initialX = canvasRef.current.width / 2;
-            } */
+            if(Object.keys(imageDataObj).length > 1){
+                if(Object.keys(imageDataObj).findIndex(value => value === id) === 0){
+                    initialX = canvasRef.current.width * 0.25;
+                }else if(Object.keys(imageDataObj).findIndex(value => value === id) === 1){
+                    initialX = canvasRef.current.width * 0.75;
+                }
+            }
         }
         const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
         setStarsObj(prev => ({ ...prev, [id]: initializedStars }));
