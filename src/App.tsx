@@ -6,6 +6,8 @@ import testImage from './assets/kawahara.png';
 import testImage2 from './assets/ai_icon.png';
 import { generateStars, Star } from './hanabi';
 import { ulid } from "ulidx";
+import { resolve } from 'path';
+import { rejects } from 'assert';
 
 export default function App(){
     /* 状態管理 */
@@ -23,41 +25,49 @@ export default function App(){
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
-    
-    async function getImageData(image: string): string{
-        // canvas要素を作成
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+    type ImageInfo = {
+        id: string;
+        imageData: ImageData;
+        width: number;
+        height: number;
+    }
+    async function getImageData(image: string): Promise<ImageInfo>{
+        return new Promise<ImageInfo>((resolve, _rejects) => {
+            // canvas要素を作成
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
 
-        // 画像を読み込み、canvasに描画
-        const img = new Image();
-        const newId: string = ulid();
-        img.onload = () => {
-            if (!ctx) return;
+            // 画像を読み込み、canvasに描画
+            const img = new Image();
+            const newId: string = ulid();
+            img.onload = () => {
+                if (!ctx) return;
 
-            // 元の画像の比率を保持したまま横幅を300pxに設定
-            const originalWidth = img.width;
-            const originalHeight = img.height;
-            const newWidth = 300;
-            const newHeight = (originalHeight * newWidth) / originalWidth;
-            console.log(`${newWidth} × ${newHeight}`);
+                // 元の画像の比率を保持したまま横幅を300pxに設定
+                const originalWidth = img.width;
+                const originalHeight = img.height;
+                const newWidth = 300;
+                const newHeight = (originalHeight * newWidth) / originalWidth;
+                console.log(`${newWidth} × ${newHeight}`);
 
-            // canvasの大きさを新しい大きさに合わせる
-            canvas.width = newWidth;
-            canvas.height = newHeight;
+                // canvasの大きさを新しい大きさに合わせる
+                canvas.width = newWidth;
+                canvas.height = newHeight;
 
-            // 画像のリサイズと中心点の調整をして描画
-            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                // 画像のリサイズと中心点の調整をして描画
+                ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
-            // imageDataの大きさを記録しておく
-            const newSize = {[newId]: {width: newWidth, height: newHeight}};
-            setFireworkSizeObj(prev => Object.assign(prev, newSize));
-
-            // ImageDataオブジェクトを取得
-            const newImageData: ImageData = ctx.getImageData(0, 0, newWidth, newHeight);
-            setImageDataObj(prev => Object.assign(prev, {[newId]: newImageData}));
-        };
-        img.src = image;
+                // ImageDataオブジェクトを取得
+                const newImageData: ImageData = ctx.getImageData(0, 0, newWidth, newHeight);
+                resolve({
+                    id: newId,
+                    imageData: newImageData,
+                    width: newWidth,
+                    height: newHeight
+                })
+            };
+            img.src = image;
+        });
     }
 
     // starデータからキャンバスに点を描画する関数
@@ -218,7 +228,16 @@ export default function App(){
     /* useEffect */
     // fireworksIdをそれぞれ生成し、画像データからimageDataを取得する
     useEffect(() => {
-        imageSrc.map(value => getImageData(value));
+        async () => {
+            const importedImageData: ImageInfo[] = await Promise.all(imageSrc.map(async (value) => {
+                return getImageData(value);
+            }));
+            console.log({importedImageData})
+            importedImageData.forEach(data => {
+                setImageDataObj(prev => Object.assign(prev, {[data.id]: data.imageData}));
+                setFireworkSizeObj(prev => Object.assign(prev, {width: data.width, height: data.height}));
+            });
+        }
         return () => {
             setImageDataObj({});
         }
