@@ -10,7 +10,8 @@ export type Star = {
     radius: number
 }
 
-export function generateStars(imageData: ImageData, angle: number = 0, interval: number = 10, radius: number = 5): Star[]{
+// export function generateStars(imageData: ImageData, angle: number = 0, interval: number = 10, radius: number = 5): Star[]{
+    export function generateStars(imageData: ImageData, angle: number = 0, interval: number = 40, radius: number = 10): Star[]{
     const stars: Star[] = [];
     const data = imageData.data;
     const width: number = imageData.width;

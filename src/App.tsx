@@ -1,36 +1,41 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Fragment } from 'react';
 // import testImage from './assets/computer_laptop.png';
 // import testImage from './assets/game_icon.png';
 // import testImage from './assets/ai_icon.png';
 import testImage from './assets/kawahara.png';
+import testImage2 from './assets/ai_icon.png';
 import { generateStars, Star } from './hanabi';
+import { ulid } from "ulidx";
+import { resolve } from 'path';
 
 export default function App(){
     /* 状態管理 */
-    const [imageSrc, setImageSrc]= useState<string>(testImage);
-    const [imageData, setImageData] = useState<ImageData | null>(null); // 読み込む画像データ
+    const [imageSrc, setImageSrc]= useState<string[]>([testImage, testImage2]);
+    const [imageData, setImageData] = useState<{[id: string]: ImageData}>({}); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
 
-    const starsRef = useRef<Star[]>([]); // 花火の星(アニメーション完了後の位置)
-    const [stars, setStars] = useState<Star[]>([]); // 花火の星(アニメーション用)
-    const [fireworkWidth, setFireworkWidth] = useState<number>(0); // 花火の幅
-    const [fireworkHeight, setFireworkHeight] = useState<number>(0); // 花火の高さ
-    const [launchAngle, setLaunchAngle] = useState<number>(0); // 花火の打ち上げ角度 (デフォルト90度)
+    const [fireworksId, setFireworksId] = useState<string[]>([]); // 花火ID
+    const starsRef = useRef<{[id: string]: Star[]}>({}); // 花火の星(アニメーション完了後の位置)
+    const [stars, setStars] = useState<{[id: string]: Star[]}>({}); // 花火の星(アニメーション用)
+    const [fireworkSize, setFireworkSize] = useState<{[id: string]: {width: number, height: number}}>({}); // 花火の幅
+    const [launchAngle, setLaunchAngle] = useState<number>(0); // 花火の打ち上げ角度 (デフォルト0度)
 
-    const [animationFrameId, setAnimationFrameId] = useState<number | null>(null); // 花火アニメーション用ID
-    const isFinishedAnimation = useRef<boolean>(true); // 花火アニメーションが終了したかどうか
+    const [animationFrameId, setAnimationFrameId] = useState<{[id: string]: number}>({}); // 花火アニメーション用ID
+    const isFinishedAnimation = useRef<{[id: string]: boolean}>({}); // 花火アニメーションが終了したかどうか
 
     /* 関数定義 */
     // 画像からImageDataを作成する関数
-    function getImageData(image: string) {
+    function getImageData(image: string): string{
         // canvas要素を作成
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
 
         // 画像を読み込み、canvasに描画
         const img = new Image();
+        const newId: string = ulid();
         img.onload = () => {
+            if (!ctx) return;
+
             // 元の画像の比率を保持したまま横幅を300pxに設定
             const originalWidth = img.width;
             const originalHeight = img.height;
@@ -46,26 +51,20 @@ export default function App(){
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
             // imageDataの大きさを記録しておく
-            setFireworkWidth(newWidth);
-            setFireworkHeight(newHeight);
+            const newSize = { [newId]: { width: newWidth, height: newHeight } };
+            setFireworkSize(prev => Object.assign({}, prev, newSize));
 
             // ImageDataオブジェクトを取得
-            setImageData(ctx.getImageData(0, 0, newWidth, newHeight));
+            const newImageData: ImageData = ctx.getImageData(0, 0, newWidth, newHeight);
+            setImageData(prev => Object.assign({}, prev, { [newId]: newImageData }));
         };
         img.src = image;
+        return newId;
     }
 
     // starデータからキャンバスに点を描画する関数
     function drawStar(ctx: CanvasRenderingContext2D, star: Star) {
-        let color: string = "rgba(0, 0, 0, 0)";
-        if(
-            typeof star.color.red === "number" && 
-            typeof star.color.green === "number" && 
-            typeof star.color.blue === "number" && 
-            typeof star.color.alpha === "number"
-        ){
-            color = `rgba(${[star.color.red, star.color.green, star.color.blue, star.color.alpha / 255]})`;
-        }
+        const color: string = `rgba(${[star.color.red, star.color.green, star.color.blue, star.color.alpha / 255]})`;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
@@ -74,45 +73,72 @@ export default function App(){
     }
 
     // 画像データを読み込み、花火を爆発させるアニメーションを開始する
-    function startAnimation(imageData: ImageData){
+    function startAnimation(id: string, imageData: ImageData){
         // 前回の花火打ち上げアニメーションを消去し、初期化する
-        if(animationFrameId){
-            cancelAnimationFrame(animationFrameId);
-            isFinishedAnimation.current = true;
+        if(animationFrameId[id]){
+            cancelAnimationFrame(animationFrameId[id]);
+            isFinishedAnimation.current[id] = true;
         }
 
         // imageDataから花火の星を作成する
         const newStars: Star[] = generateStars(imageData, launchAngle);
-        starsRef.current = newStars;
+        starsRef.current[id] = newStars;
 
         // 作成した花火の星を中央に集める
         let initialX: number =  0;
         let initialY: number =  0;
         if(canvasRef.current){
             // 花火を打ち上げる中心点を求める
-            initialX = canvasRef.current.width / 2;
             initialY = canvasRef.current.height / 2;
+            if(fireworksId.findIndex(value => value === id) === 0){
+                initialX = canvasRef.current.width * 0.25;
+            }else if(fireworksId.findIndex(value => value === id) === 1){
+                initialX = canvasRef.current.width * 0.75;
+            }else{
+                initialX = canvasRef.current.width / 2;
+            }
         }
         const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
-        setStars(initializedStars);
+        console.log({[id]: initializedStars})
+        setStars(prev => Object.assign(prev, {[id]: initializedStars}));
 
         // アニメーションを開始
-        setAnimationFrameId(requestAnimationFrame(() => burstFireworks(initialX, initialY)));
-        isFinishedAnimation.current = false;
+        const newAnimationFrameId: number = requestAnimationFrame(() => burstFireworks(id, initialX, initialY));
+        setAnimationFrameId(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
+        isFinishedAnimation.current[id] = false;
+    }
+
+    // 現状のstarsを再度キャンバスに描画する関数
+    function refreshStarsDrawing(id: string){
+        if (stars[id].length <= 0) return;
+
+        // Canvasコンテキストを取得
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Canvasをクリア
+        // ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // スターを描画
+        for(const star of stars[id]){
+            drawStar(ctx, star);
+        }
     }
 
     // 花火を爆発させるアニメーション
-    function burstFireworks(initialX: number, initialY: number){
-        if(!starsRef.current) return;
-        const renderingStars: Star[] = starsRef.current; // 花火の完成予想図
+    function burstFireworks(id: string, initialX: number, initialY: number){
+        if(!starsRef.current[id]) return;
+        const renderingStars: Star[] = starsRef.current[id]; // 花火の完成予想図
         const speed: number = 10;
 
-        setStars((prevStars) => {
+        setStars(prevStars => {
             // 新しいスターの位置を計算して更新
-            const updatedStars = prevStars.map((star, index) => {
+            const updatedStars = prevStars[id].map((star, index) => {
                 const renderingStar: Star = renderingStars[index];
-                const renderingX: number = renderingStar.x - fireworkWidth / 2 + initialX
-                const renderingY: number = renderingStar.y - fireworkHeight / 2 + initialY
+                const renderingX: number = renderingStar.x - fireworkSize[id].width / 2 + initialX
+                const renderingY: number = renderingStar.y - fireworkSize[id].height / 2 + initialY
 
                 /* ここを改変することで、花火のモーションを変更できる */
                 const dx: number = (renderingX - star.x) / speed;
@@ -124,53 +150,63 @@ export default function App(){
             });
 
             // 加速度が0に近づいたら、アニメーションを停止する
-            isFinishedAnimation.current = prevStars.every((star, index) => {
+            isFinishedAnimation.current[id] = prevStars[id].every((star, index) => {
                 const renderingStar: Star = renderingStars[index];
-                const dx: number = (renderingStar.x - star.x + fireworkWidth / 2) / speed;
-                const dy: number = (renderingStar.y - star.y + fireworkHeight / 2) / speed;
+                const dx: number = (renderingStar.x - star.x + fireworkSize[id].width / 2) / speed;
+                const dy: number = (renderingStar.y - star.y + fireworkSize[id].height / 2) / speed;
                 return (Math.abs(dx) < 1 && Math.abs(dy) < 1);
             })
 
-            return updatedStars;
+            const result = Object.assign(prevStars, {[id]: updatedStars})
+            return result;
         });
 
-        if(isFinishedAnimation.current){
+        if(isFinishedAnimation.current[id]){
             // 花火のアニメーションが終了したら、アニメーションを停止する
-            setAnimationFrameId(null);
+            setAnimationFrameId(prev => {
+                const {removedId: id, ...newAnimationFrameId} = prev;
+                return newAnimationFrameId;
+            });
             return;
         }else{
             // 次のフレームを要求
-            setAnimationFrameId(requestAnimationFrame(() => burstFireworks(initialX, initialY)));
+            const newAnimationFrameId = requestAnimationFrame(() => burstFireworks(id, initialX, initialY));
+            setAnimationFrameId(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
         }
     }
 
     // 花火が消えていくアニメーション
-    function fadeFireworks(){
-        if(!starsRef.current) return;
+    function fadeFireworks(id: string){
+        if(!starsRef.current[id]) return;
         const speed: number = 10;
 
         setStars((prevStars) => {
             // 新しい花火の星のの透明度を計算して更新
-            const updatedStars = prevStars.map((star) => {
+            const updatedStars = prevStars[id].map((star) => {
                 const newAlpha: number = Math.max(Math.round(star.color.alpha - speed), 0); // 透明度が負にならないようにする
                 return {...star, color: {...star.color, alpha: newAlpha}};
             });
 
-            isFinishedAnimation.current = prevStars.every((star) => {
+            isFinishedAnimation.current[id] = prevStars[id].every((star) => {
                 // 全ての花火の星の透明度が0以下になったらアニメーションを停止
                 return star.color.alpha <= 0;
             })
 
-            return updatedStars;
+            const result = Object.assign(prevStars, {[id]: updatedStars});
+            return result;
         });
 
-        if(isFinishedAnimation.current){
+        if(isFinishedAnimation.current[id]){
             // 花火のアニメーションが終了したら、アニメーションを停止する
-            setAnimationFrameId(null);
+            setAnimationFrameId(prev => {
+                const {removedId: id, ...newAnimationFrameId} = prev;
+                return newAnimationFrameId;
+            });
             return;
         }else{
             // 次のフレームを要求
-            setAnimationFrameId(requestAnimationFrame(fadeFireworks));
+            const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworks(id));
+            setAnimationFrameId(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
         }
     }
 
@@ -182,41 +218,40 @@ export default function App(){
     }
 
     /* useEffect */
-    // 画像データからimageDataを取得する
+    // fireworksIdをそれぞれ生成し、画像データからimageDataを取得する
     useEffect(() => {
-        console.log(imageSrc)
-        getImageData(imageSrc);
+        setFireworksId(_prev => {
+            const newFireworksId: string[] = imageSrc.map(value => {
+                const newId: string = getImageData(value);
+                return newId;
+            });
+            return newFireworksId;
+        });
     }, [imageSrc]);
 
-    // imageDataが取得出来たら、花火の星を作成して、花火アニメーションを開始する
+    // 花火IDの用意とimageDataの取得が出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
-        if (imageData) {
-            startAnimation(imageData);
-        }
+        console.log({imageData})
+        fireworksId.forEach(id => {
+            if(imageData[id]) {
+                startAnimation(id, imageData[id]);
+            }
+        });
+
         // アンマウント時にアニメーションを停止
         return () => {
-            if(animationFrameId) cancelAnimationFrame(animationFrameId);
-            isFinishedAnimation.current = true;
+            fireworksId.forEach(id => {
+                if(animationFrameId[id]) cancelAnimationFrame(animationFrameId[id]);
+                isFinishedAnimation.current[id] = true;
+            });
         };
     }, [imageData]);
 
     // starsが変更される度、再度キャンバスに描画する
     useEffect(() => {
-        if (stars.length <= 0) return;
-
-        // Canvasコンテキストを取得
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Canvasをクリア
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // スターを描画
-        for(const star of stars){
-            drawStar(ctx, star);
-        }
+        fireworksId.forEach(id => {
+            refreshStarsDrawing(id);
+        })
     }, [stars]);
 
     return (
@@ -225,26 +260,31 @@ export default function App(){
                 id="canvas"
                 className="bg-img-transparent"
                 ref={canvasRef}
-                width={320}
+                width={620}
                 height={320}
                 style={{
                     border: "black 1px solid"
                 }}
             />
             <br/>
-            <button
-                onClick={() => {
-                    // アニメーションを開始
-                    setAnimationFrameId(requestAnimationFrame(fadeFireworks));
-                    isFinishedAnimation.current = false;
-                }}
-            >花火消滅</button>
-            <button
-                onClick={() => {
-                    if(imageData) startAnimation(imageData);
-                }}
-            >花火再打ち上げ</button>
-            <br/>
+            {fireworksId.map(id => (
+                <Fragment key={id}>
+                    <button
+                        onClick={() => {
+                            // アニメーションを開始
+                            const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworks(id));
+                            setAnimationFrameId(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
+                            isFinishedAnimation.current[id] = false;
+                        }}
+                    >花火消滅</button>
+                    <button
+                        onClick={() => {
+                            if(imageData[id]) startAnimation(id, imageData[id]);
+                        }}
+                    >花火再打ち上げ</button>
+                <br/>
+                </Fragment>
+            ))}
             <label>
                 打ち上げ角度: 
                 <input 
@@ -273,7 +313,36 @@ export default function App(){
                     reader.onload = (e) => {
                         const newImageSrc = e.target?.result;
                         if(typeof newImageSrc === "string"){
-                            setImageSrc(newImageSrc);
+                            setImageSrc(prev => {
+                                prev[0] = newImageSrc;
+                                return prev;
+                            });
+                            console.log(newImageSrc)
+                        }
+                    };
+                    reader.readAsDataURL(file);  // ファイルをData URLとして読み込む
+                }}
+            />
+            <input
+                type="file"
+                accept="image/png, image/jpeg"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    // 入力されたファイルを読み込む
+                    const files = event.currentTarget.files;
+                    if (!files || files?.length === 0) return; // ファイルがなければ終了
+
+                    // 先頭のファイルを取得
+                    const file: File = files[0];
+
+                    // FileReaderを使ってファイルを読み込む
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const newImageSrc = e.target?.result;
+                        if(typeof newImageSrc === "string"){
+                            setImageSrc(prev => {
+                                prev[1] = newImageSrc;
+                                return prev;
+                            });
                             console.log(newImageSrc)
                         }
                     };
