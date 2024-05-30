@@ -136,6 +136,7 @@ export default function App(){
 
     // 花火を爆発させるアニメーション
     function burstFireworks(id: string, initialX: number, initialY: number){
+        // console.log("burstFireworks"+"\n"+id);
         if(!starsRef.current[id]) return;
         const renderingStars: Star[] = starsRef.current[id]; // 花火の完成予想図
         const speed: number = 10;
@@ -174,6 +175,7 @@ export default function App(){
                 const {removedId: id, ...newAnimationFrameId} = prev;
                 return newAnimationFrameId;
             });
+            console.log("stop burstFireworks"+"\n"+id);
             return;
         }else{
             // 次のフレームを要求
