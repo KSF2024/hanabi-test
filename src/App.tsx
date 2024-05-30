@@ -115,26 +115,6 @@ export default function App(){
         isFinishedAnimationObj.current[id] = false;
     }
 
-    // 現状のstarsを再度キャンバスに描画する関数
-    function refreshStarsDrawing(id: string){
-        if (starsObj[id].length <= 0) return;
-
-        // Canvasコンテキストを取得
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Canvasをクリア
-        // TODO 残像を残さないようにする
-        // ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // スターを描画
-        for(const star of starsObj[id]){
-            drawStar(ctx, star);
-        }
-    }
-
     // 花火を爆発させるアニメーション
     function burstFireworks(id: string, initialX: number, initialY: number){
         // console.log("burstFireworks"+"\n"+id);
@@ -269,8 +249,20 @@ export default function App(){
     // starsが変更される度、再度キャンバスに描画する
     useEffect(() => {
         console.log("redraw caused", {starsObj});
+        // Canvasコンテキストを取得
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Canvasをクリア
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 花火の星を描画
         Object.keys(imageDataObj).forEach(id => {
-            refreshStarsDrawing(id);
+            for(const star of starsObj[id]){
+                drawStar(ctx, star);
+            }
         })
     }, [starsObj]);
 
