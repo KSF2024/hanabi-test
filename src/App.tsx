@@ -9,7 +9,7 @@ import { ulid } from "ulidx";
 
 export default function App(){
     /* 状態管理 */
-    const [imageSrc, setImageSrc]= useState<string[]>([testImage/* , testImage2 */]);
+    const [imageSrc, setImageSrc]= useState<string[]>([testImage, testImage2]);
     const [imageDataObj, setImageDataObj] = useState<{[id: string]: ImageData}>({}); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
 
@@ -107,11 +107,11 @@ export default function App(){
             }
         }
         const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
-        setStarsObj(prev => Object.assign(prev, {[id]: initializedStars}));
+        setStarsObj(prev => ({ ...prev, [id]: initializedStars }));
 
         // アニメーションを開始
         const newAnimationFrameId: number = requestAnimationFrame(() => burstFireworks(id, initialX, initialY));
-        setAnimationFrameIdObj(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
+        setAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
         isFinishedAnimationObj.current[id] = false;
     }
 
@@ -126,6 +126,7 @@ export default function App(){
         if (!ctx) return;
 
         // Canvasをクリア
+        // TODO 残像を残さないようにする
         // ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // スターを描画
@@ -165,7 +166,7 @@ export default function App(){
                 return (Math.abs(dx) < 1 && Math.abs(dy) < 1);
             })
 
-            const result = Object.assign(prevStars, {[id]: updatedStars});
+            const result = {...prevStars, [id]: updatedStars};
             return result;
         });
 
@@ -180,7 +181,7 @@ export default function App(){
         }else{
             // 次のフレームを要求
             const newAnimationFrameId = requestAnimationFrame(() => burstFireworks(id, initialX, initialY));
-            setAnimationFrameIdObj(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
+            setAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
         }
     }
 
@@ -201,7 +202,7 @@ export default function App(){
                 return star.color.alpha <= 0;
             })
 
-            const result = Object.assign(prevStars, {[id]: updatedStars});
+            const result = {...prevStars, [id]: updatedStars};
             return result;
         });
 
@@ -215,7 +216,7 @@ export default function App(){
         }else{
             // 次のフレームを要求
             const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworks(id));
-            setAnimationFrameIdObj(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
+            setAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
         }
     }
 
@@ -292,7 +293,7 @@ export default function App(){
                         onClick={() => {
                             // アニメーションを開始
                             const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworks(id));
-                            setAnimationFrameIdObj(prev => Object.assign(prev, {[id]: newAnimationFrameId}));
+                            setAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
                             isFinishedAnimationObj.current[id] = false;
                         }}
                     >花火消滅</button>
