@@ -235,11 +235,15 @@ export default function App(){
 
     // 花火IDの用意とimageDataの取得が出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
-        Object.keys(imageDataObj).forEach(id => {
-            if(imageDataObj[id]) {
-                startAnimation(id, imageDataObj[id]);
+        (async () => {
+            for(const id of Object.keys(imageDataObj)){
+                console.log(id)
+                if(imageDataObj[id]){
+                    startAnimation(id, imageDataObj[id]);
+                    await new Promise(resolve => setTimeout(resolve, 250));
+                }
             }
-        });
+        })();
 
         // アンマウント時にアニメーションを停止
         return () => {
@@ -264,6 +268,7 @@ export default function App(){
 
         // 花火の星を描画
         Object.keys(imageDataObj).forEach(id => {
+            if(!starsObj[id]) return;
             for(const star of starsObj[id]){
                 drawStar(ctx, star);
             }
