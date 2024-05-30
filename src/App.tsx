@@ -107,7 +107,6 @@ export default function App(){
             }
         }
         const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
-        console.log({[id]: initializedStars})
         setStarsObj(prev => Object.assign(prev, {[id]: initializedStars}));
 
         // アニメーションを開始
@@ -165,7 +164,7 @@ export default function App(){
                 return (Math.abs(dx) < 1 && Math.abs(dy) < 1);
             })
 
-            const result = Object.assign(prevStars, {[id]: updatedStars})
+            const result = Object.assign(prevStars, {[id]: updatedStars});
             return result;
         });
 
@@ -245,7 +244,7 @@ export default function App(){
         return () => {
             setImageDataObj({});
         }
-    }, []);
+    }, [imageSrc]);
 
     // 花火IDの用意とimageDataの取得が出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
@@ -266,6 +265,7 @@ export default function App(){
 
     // starsが変更される度、再度キャンバスに描画する
     useEffect(() => {
+        console.log("redraw caused", {starsObj});
         Object.keys(imageDataObj).forEach(id => {
             refreshStarsDrawing(id);
         })
