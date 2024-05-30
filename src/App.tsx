@@ -9,7 +9,7 @@ import { ulid } from "ulidx";
 
 export default function App(){
     /* 状態管理 */
-    const [imageSrc, setImageSrc]= useState<string[]>([testImage/* , testImage2 */]);
+    const [imageSrc, setImageSrc]= useState<string[]>([testImage, testImage2]);
     const [imageDataObj, setImageDataObj] = useState<{[id: string]: ImageData}>({}); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
 
@@ -276,7 +276,7 @@ export default function App(){
                 id="canvas"
                 className="bg-img-transparent"
                 ref={canvasRef}
-                width={/* 620 */320}
+                width={620}
                 height={320}
                 style={{
                     border: "black 1px solid"
