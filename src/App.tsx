@@ -70,6 +70,7 @@ export default function App(){
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.closePath();
     }
 
     // 画像データを読み込み、花火を爆発させるアニメーションを開始する
@@ -88,6 +89,7 @@ export default function App(){
         let initialX: number =  0;
         let initialY: number =  0;
         if(canvasRef.current){
+            // 花火を打ち上げる中心点を求める
             initialX = canvasRef.current.width / 2;
             initialY = canvasRef.current.height / 2;
         }

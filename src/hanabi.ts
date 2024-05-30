@@ -30,7 +30,7 @@ export function generateStars(imageData: ImageData, angle: number = 0, interval:
             const alpha = data[index + 3];
 
             // 座標を回転させる
-            const rotatedPoint = rotatePoint(x, y, width, height, angle);
+            const rotatedPoint = (angle === 0) ? {x, y} : rotatePoint(x, y, width, height, angle);
 
             stars.push(Object.assign({
                 color: { red, green, blue, alpha },
