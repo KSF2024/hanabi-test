@@ -6,8 +6,6 @@ import testImage from './assets/kawahara.png';
 import testImage2 from './assets/ai_icon.png';
 import { generateStars, Star } from './hanabi';
 import { ulid } from "ulidx";
-import { resolve } from 'path';
-import { rejects } from 'assert';
 
 export default function App(){
     /* 状態管理 */
@@ -32,6 +30,7 @@ export default function App(){
         height: number;
     }
     async function getImageData(image: string): Promise<ImageInfo>{
+        console.log("getImageData")
         return new Promise<ImageInfo>((resolve, _rejects) => {
             // canvas要素を作成
             const canvas = document.createElement('canvas');
@@ -40,6 +39,7 @@ export default function App(){
             // 画像を読み込み、canvasに描画
             const img = new Image();
             const newId: string = ulid();
+            console.log({newId})
             img.onload = () => {
                 if (!ctx) return;
 
@@ -59,12 +59,15 @@ export default function App(){
 
                 // ImageDataオブジェクトを取得
                 const newImageData: ImageData = ctx.getImageData(0, 0, newWidth, newHeight);
-                resolve({
+                
+                const result: ImageInfo = {
                     id: newId,
                     imageData: newImageData,
                     width: newWidth,
                     height: newHeight
-                })
+                };
+                console.log({result});
+                resolve(result);
             };
             img.src = image;
         });
@@ -228,16 +231,17 @@ export default function App(){
     /* useEffect */
     // fireworksIdをそれぞれ生成し、画像データからimageDataを取得する
     useEffect(() => {
-        async () => {
+        (async () => {
+            
             const importedImageData: ImageInfo[] = await Promise.all(imageSrc.map(async (value) => {
-                return getImageData(value);
+                return await getImageData(value);
             }));
             console.log({importedImageData})
             importedImageData.forEach(data => {
                 setImageDataObj(prev => Object.assign(prev, {[data.id]: data.imageData}));
                 setFireworkSizeObj(prev => Object.assign(prev, {width: data.width, height: data.height}));
             });
-        }
+        })();
         return () => {
             setImageDataObj({});
         }
