@@ -183,13 +183,14 @@ export default function App(){
         // 丸型の火花を生成する関数
         function generateNormalSparks(){
             for(let i: number = 0; i < amount; i++){
-                const direction: number = (360 / amount) * i; // 火花の向き
+                const direction: number = ((360 / amount) * i) / Math.PI; // 火花の向き(ラジアン)
+                console.log("direction: ", direction)
                 const newOuterSpark: Spark = {
                     color,
                     alpha: 255,
                     x: initialX,
                     y: initialY,
-                    radius: standardRadius * 0.75,
+                    radius: standardRadius,
                     direction,
                     movementType: 2,
                     sparkType: sparkType as 0 | 1 | 2
@@ -199,7 +200,7 @@ export default function App(){
                     alpha: 255,
                     x: initialX,
                     y: initialY,
-                    radius: standardRadius,
+                    radius: standardRadius * 0.9,
                     direction,
                     movementType: 1,
                     sparkType: sparkType as 0 | 1 | 2
@@ -210,7 +211,6 @@ export default function App(){
             }
         }
 
-        console.log("generatedSparks: ", result);
         return result;
     }
 
