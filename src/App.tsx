@@ -28,7 +28,7 @@ type Spark = {
 const config = {
     color: "red",
     sparkType: 0,
-    widthMagnification: 2
+    widthMagnification: 1
 }
 
 export default function App(){
@@ -39,7 +39,7 @@ export default function App(){
 
     const starsRef = useRef<{[id: string]: Star[]}>({}); // 花火の星(アニメーション完了後の位置)
     const [starsObj, setStarsObj] = useState<{[id: string]: Star[]}>({}); // 花火の星(アニメーション用)
-    const [sparks, setSparksObj] = useState<{[id: string]: Spark[]}>({}); // 花火の火花(アニメーション用)
+    const [sparksObj, setSparksObj] = useState<{[id: string]: Spark[]}>({}); // 花火の火花(アニメーション用)
     const [fireworkSizeObj, setFireworkSizeObj] = useState<{[id: string]: {width: number, height: number}}>({}); // 花火の幅
     const [launchAngle, setLaunchAngle] = useState<number>(0); // 花火の打ち上げ角度 (デフォルト0度)
 
@@ -409,7 +409,7 @@ export default function App(){
         };
     }, [imageDataObj]);
 
-    // starsが変更される度、再度キャンバスに描画する
+    // starsやsparksが変更される度、再度キャンバスに描画する
     useEffect(() => {
         console.log("redraw caused");
         // Canvasコンテキストを取得
@@ -421,14 +421,23 @@ export default function App(){
         // Canvasをクリア
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 花火の星を描画
+        // 花火を描画
         Object.keys(imageDataObj).forEach(id => {
-            if(!starsObj[id]) return;
-            for(const star of starsObj[id]){
-                drawStar(ctx, star);
+            // 花火の星を描画
+            if(starsObj[id]){
+                for(const star of starsObj[id]){
+                    drawStar(ctx, star);
+                }
+            }
+
+            // 火花を描画
+            if(sparksObj[id]){
+                for(const spark of sparksObj[id]){
+                    drawSpark(ctx, spark);
+                }
             }
         })
-    }, [starsObj]);
+    }, [starsObj, sparksObj]);
 
     return (
         <>
@@ -436,8 +445,10 @@ export default function App(){
                 id="canvas"
                 className="bg-img-transparent"
                 ref={canvasRef}
-                width={300 * config.widthMagnification + 20}
-                height={320}
+                // width={300 * config.widthMagnification + 20}
+                // height={320}
+                width={500}
+                height={500}
                 style={{
                     border: "black 1px solid"
                 }}
