@@ -166,7 +166,6 @@ export default function App(){
     function generateSparks(sparkType: number, color: string, initialX: number, initialY: number): Spark[]{
         const result: Spark[] = [];
 
-        let direction: number = 0; // 火花の向き
         const amount: number = 30; // 火花の数
         const standardRadius: number = 5; // 火花の大きさ
 
@@ -184,6 +183,7 @@ export default function App(){
         // 丸型の火花を生成する関数
         function generateNormalSparks(){
             for(let i: number = 0; i < amount; i++){
+                const direction: number = (360 / amount) * i; // 火花の向き
                 const newOuterSpark: Spark = {
                     color,
                     alpha: 255,
@@ -204,11 +204,13 @@ export default function App(){
                     movementType: 1,
                     sparkType: sparkType as 0 | 1 | 2
                 };
+
                 result.push(newOuterSpark);
                 result.push(newInnerSpark);
             }
         }
 
+        console.log("generatedSparks: ", result);
         return result;
     }
 
@@ -226,44 +228,49 @@ export default function App(){
     function burstSparks(id: string, initialX: number, initialY: number){
         const speed: number = 10;
         const outerDifference: number = 0.75// 外火花と内火花の距離の差の倍率
-        let isFinishedAnimation: boolean = false; // アニメーションを今回で終わらせるかどうか
 
         setSparksObj(prevSparks => {
             const newSparks: Spark[] = prevSparks[id].map(spark => {
                 // 火花の最終位置を計算する
                 const fireworkSize = fireworkSizeObj[id];
-                const maxDistance: number = Math.max(fireworkSize.width, fireworkSize.height) + 20;
+                const maxDistance: number = (Math.max(fireworkSize.width, fireworkSize.height) / 2) + 50;
                 const goalDistance: number = maxDistance * ((spark.movementType - 1) ? 1 : outerDifference); // 火花の最終位置から中心点の距離
+
+                // 火花の動きを停止させるかどうかを計算する
+                const prevDistanceX: number = Math.abs(initialX - spark.x); // 中心点からの横距離
+                const prevDistanceY: number = Math.abs(initialY - spark.y); // 中心点からの縦距離
+                const prevDistance: number = Math.sqrt(Math.pow(prevDistanceX, 2) + Math.pow(prevDistanceY, 2)); // 中心点からの距離
+                if((spark.movementType === 0) || (prevDistance >= goalDistance)){
+                    if(spark.movementType === 2){
+                        // 外側の火花が目標位置に達した場合、アニメーションを終了させる
+                        isFinishedSparksAnimationObj.current[id] = true;
+                    }
+
+                    // 火花が残像扱い(0: 停止)の場合、あるいは火花が目標位置に達した場合、火花を停止させる
+                    return {...spark};
+                }
 
                 // 新しい火花の位置を計算する
                 const dx: number = Math.cos(spark.direction) * speed;
                 const dy: number = Math.sin(spark.direction) * speed;
-                const newX: number = spark.x + dx;
-                const newY: number = spark.y + dy;
+                let newX: number = spark.x + dx;
+                let newY: number = spark.y + dy;
 
-                // 火花の動きを停止させるかどうかを計算する
-                let isStopped: boolean = false;
-                const newDistanceX: number = Math.abs(initialX - newX); // 中心点からの横距離
-                const newDistanceY: number = Math.abs(initialY - newY); // 中心点からの縦距離
-                const newDistance: number = Math.sqrt(Math.pow(newDistanceX, 2) + Math.pow(newDistanceY, 2)); // 中心点からの距離
-                if((spark.movementType === 0) || (newDistance > goalDistance)){
-                    // 火花が残像扱い(0: 停止)の場合、あるいは火花が目標位置に達した場合、火花を停止させる
-                    isStopped = true;
-
-                    // 外側の火花が目標位置に達した場合、アニメーションを終了させる
-                    isFinishedAnimation = true;
+                // 新しい火花の位置が最終位置を超えているなら、最終位置にグリッドする
+                const newDistance: number = Math.sqrt(Math.pow(initialX - newX, 2) + Math.pow((initialY - newY), 2)); // 中心点からの距離
+                if(newDistance >= goalDistance){
+                    const goalX: number = initialX + Math.cos(spark.direction) * goalDistance;
+                    const goalY: number = initialY + Math.sin(spark.direction) * goalDistance;
+                    newX = goalX;
+                    newY = goalY;
                 }
 
                 const newSpark: Spark = {...spark, x: newX, y: newY};
-                const result: Spark = (isStopped) ? {...spark} : newSpark;
-                return result;
+                return newSpark;
             });
 
             return {...prevSparks, [id]: newSparks};
         });
-
-            // 外側の火花が停止したら、アニメーションを停止する
-            isFinishedFireworksAnimationObj.current[id] = isFinishedAnimation;
 
         if(isFinishedSparksAnimationObj.current[id]){
             console.log("sparks animation stopped")
@@ -324,10 +331,14 @@ export default function App(){
             cancelAnimationFrame(fireworksAnimationFrameIdObj[id]);
             isFinishedFireworksAnimationObj.current[id] = true;
         }
+        if(sparksAnimationFrameIdObj[id]){
+            cancelAnimationFrame(sparksAnimationFrameIdObj[id]);
+            isFinishedSparksAnimationObj.current[id] = true;
+        }
 
         // imageDataから花火の星を作成する
         const newStars: Star[] = generateStars(imageData, launchAngle);
-        console.log({[id]: newStars})
+        // console.log({[id]: newStars})
         starsRef.current[id] = newStars;
 
         // 花火を打ち上げる中心点を求める
@@ -382,7 +393,7 @@ export default function App(){
             setImageDataObj(newImageDataObj);
             setFireworkSizeObj(newFireworkSizeObj);
         })();
-        console.log({imageSrc})
+        // console.log({imageSrc})
         return () => {
             setImageDataObj({});
         }
@@ -392,7 +403,7 @@ export default function App(){
     useEffect(() => {
         (async () => {
             for(const id of Object.keys(imageDataObj)){
-                console.log(id)
+                // console.log(id)
                 if(imageDataObj[id]){
                     startBurstAnimation(id, imageDataObj[id]);
                     await new Promise(resolve => setTimeout(resolve, 250));
@@ -405,6 +416,8 @@ export default function App(){
             Object.keys(imageDataObj).forEach(id => {
                 if(fireworksAnimationFrameIdObj[id]) cancelAnimationFrame(fireworksAnimationFrameIdObj[id]);
                 isFinishedFireworksAnimationObj.current[id] = true;
+                if(sparksAnimationFrameIdObj[id]) cancelAnimationFrame(sparksAnimationFrameIdObj[id]);
+                isFinishedSparksAnimationObj.current[id] = true;
             });
         };
     }, [imageDataObj]);
@@ -423,17 +436,17 @@ export default function App(){
 
         // 花火を描画
         Object.keys(imageDataObj).forEach(id => {
-            // 花火の星を描画
-            if(starsObj[id]){
-                for(const star of starsObj[id]){
-                    drawStar(ctx, star);
-                }
-            }
-
             // 火花を描画
             if(sparksObj[id]){
                 for(const spark of sparksObj[id]){
                     drawSpark(ctx, spark);
+                }
+            }
+
+            // 花火の星を描画
+            if(starsObj[id]){
+                for(const star of starsObj[id]){
+                    drawStar(ctx, star);
                 }
             }
         })
