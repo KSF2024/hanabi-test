@@ -7,28 +7,47 @@ import testImage2 from './assets/ai_icon.png';
 import { generateStars, Star } from './hanabi';
 import { ulid } from "ulidx";
 
+type ImageInfo = {
+    id: string;
+    imageData: ImageData;
+    width: number;
+    height: number;
+}
+
+type Spark = {
+    color: string;
+    x: number;
+    y: number;
+    radius: number;
+    direction: number;
+    movementType: number; // 火花の動き(0: 停止, 1: 内丸, 2: 外丸)
+    sparkType: number; // 火花の形(0: 丸型, 1: 線型, 2: 雫型)
+}
+
+const config = {
+    color: "red",
+    sparkType: 0,
+    widthMagnification: 2
+}
+
 export default function App(){
     /* 状態管理 */
-    const [imageSrc, setImageSrc]= useState<string[]>([testImage, testImage2]);
+    const [imageSrc, setImageSrc]= useState<string[]>((config.widthMagnification > 1)? [testImage, testImage2] : [testImage]);
     const [imageDataObj, setImageDataObj] = useState<{[id: string]: ImageData}>({}); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
 
     const starsRef = useRef<{[id: string]: Star[]}>({}); // 花火の星(アニメーション完了後の位置)
     const [starsObj, setStarsObj] = useState<{[id: string]: Star[]}>({}); // 花火の星(アニメーション用)
+    const [sparks, setSparksObj] = useState<{[id: string]: Spark[]}>({}); // 花火の火花(アニメーション用)
     const [fireworkSizeObj, setFireworkSizeObj] = useState<{[id: string]: {width: number, height: number}}>({}); // 花火の幅
     const [launchAngle, setLaunchAngle] = useState<number>(0); // 花火の打ち上げ角度 (デフォルト0度)
 
     const [animationFrameIdObj, setAnimationFrameIdObj] = useState<{[id: string]: number}>({}); // 花火アニメーション用ID
     const isFinishedAnimationObj = useRef<{[id: string]: boolean}>({}); // 花火アニメーションが終了したかどうか
 
-    /* 関数定義 */
+
+    /* 花火(Star)用関数定義 */
     // 画像からImageDataを作成する関数
-    type ImageInfo = {
-        id: string;
-        imageData: ImageData;
-        width: number;
-        height: number;
-    }
     async function getImageData(image: string): Promise<ImageInfo>{
         return new Promise<ImageInfo>((resolve, _rejects) => {
             // canvas要素を作成
@@ -77,43 +96,6 @@ export default function App(){
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
-    }
-
-    // 画像データを読み込み、花火を爆発させるアニメーションを開始する
-    function startAnimation(id: string, imageData: ImageData){
-        // 前回の花火打ち上げアニメーションを消去し、初期化する
-        if(animationFrameIdObj[id]){
-            cancelAnimationFrame(animationFrameIdObj[id]);
-            isFinishedAnimationObj.current[id] = true;
-        }
-
-        // imageDataから花火の星を作成する
-        const newStars: Star[] = generateStars(imageData, launchAngle);
-        console.log({[id]: newStars})
-        starsRef.current[id] = newStars;
-
-        // 作成した花火の星を中央に集める
-        let initialX: number =  0;
-        let initialY: number =  0;
-        if(canvasRef.current){
-            // 花火を打ち上げる中心点を求める
-            initialY = canvasRef.current.height / 2;
-            initialX = canvasRef.current.width / 2;
-            if(Object.keys(imageDataObj).length > 1){
-                if(Object.keys(imageDataObj).findIndex(value => value === id) === 0){
-                    initialX = canvasRef.current.width * 0.25;
-                }else if(Object.keys(imageDataObj).findIndex(value => value === id) === 1){
-                    initialX = canvasRef.current.width * 0.75;
-                }
-            }
-        }
-        const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
-        setStarsObj(prev => ({ ...prev, [id]: initializedStars }));
-
-        // アニメーションを開始
-        const newAnimationFrameId: number = requestAnimationFrame(() => burstFireworks(id, initialX, initialY));
-        setAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
-        isFinishedAnimationObj.current[id] = false;
     }
 
     // 花火を爆発させるアニメーション
@@ -210,6 +192,101 @@ export default function App(){
         });
     }
 
+
+    /* 花火(Spark)用関数定義 */
+    // 火花データを生成する関数
+    function generateSparks(sparkType: number, color: string, initialX: number, initialY: number): Spark[]{
+        const result: Spark[] = [];
+
+        let direction: number = 0; // 火花の向き
+        const amount: number = 30; // 火花の数
+        const standardRadius: number = 5; // 火花の大きさ
+
+        // 火花データを生成する
+        switch(sparkType){
+            case 2: // 雫型
+                break;
+            case 1: // 線型
+                break;
+            case 0: // 丸型
+            default:
+                generateNormalSparks();
+        }
+
+        // 丸型の火花を生成する関数
+        function generateNormalSparks(){
+            for(let i: number = 0; i < amount; i++){
+                const newOuterSpark: Spark = {
+                    color,
+                    x: initialX,
+                    y: initialY,
+                    radius: standardRadius * 0.75,
+                    direction,
+                    movementType: 2,
+                    sparkType
+                };
+                const newInnerSpark: Spark = {
+                    color,
+                    x: initialX,
+                    y: initialY,
+                    radius: standardRadius,
+                    direction,
+                    movementType: 1,
+                    sparkType
+                };
+                result.push(newOuterSpark);
+                result.push(newInnerSpark);
+            }
+        }
+
+        return result;
+    }
+
+
+    /* useEffect用関数定義 */
+    // 画像データを読み込み、花火を爆発させるアニメーションを開始する
+    function startAnimation(id: string, imageData: ImageData){
+        // 前回の花火打ち上げアニメーションを消去し、初期化する
+        if(animationFrameIdObj[id]){
+            cancelAnimationFrame(animationFrameIdObj[id]);
+            isFinishedAnimationObj.current[id] = true;
+        }
+
+        // imageDataから花火の星を作成する
+        const newStars: Star[] = generateStars(imageData, launchAngle);
+        console.log({[id]: newStars})
+        starsRef.current[id] = newStars;
+
+        // 花火を打ち上げる中心点を求める
+        let initialX: number =  0;
+        let initialY: number =  0;
+        if(canvasRef.current){
+            initialY = canvasRef.current.height / 2;
+            initialX = canvasRef.current.width / 2;
+            if(Object.keys(imageDataObj).length > 1){
+                if(Object.keys(imageDataObj).findIndex(value => value === id) === 0){
+                    initialX = canvasRef.current.width * 0.25;
+                }else if(Object.keys(imageDataObj).findIndex(value => value === id) === 1){
+                    initialX = canvasRef.current.width * 0.75;
+                }
+            }
+        }
+
+        // 花火データを初期化(中心点に集める)し、stateに保存する
+        const initializedStars: Star[] = initializeStars(newStars, initialX, initialY);
+        setStarsObj(prev => ({ ...prev, [id]: initializedStars }));
+
+        // 火花データを作成し、stateに保存する
+        const newSparks: Spark[] = generateSparks(config.sparkType, config.color, initialX, initialY);
+        setSparksObj(prev => ({...prev, [id]: newSparks}));
+
+        // アニメーションを開始
+        const newAnimationFrameId: number = requestAnimationFrame(() => burstFireworks(id, initialX, initialY));
+        setAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
+        isFinishedAnimationObj.current[id] = false;
+    }
+
+
     /* useEffect */
     // fireworksIdをそれぞれ生成し、画像データからimageDataを取得する
     useEffect(() => {
@@ -281,7 +358,7 @@ export default function App(){
                 id="canvas"
                 className="bg-img-transparent"
                 ref={canvasRef}
-                width={620}
+                width={300 * config.widthMagnification + 20}
                 height={320}
                 style={{
                     border: "black 1px solid"
