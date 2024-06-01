@@ -228,6 +228,11 @@ export default function App(){
         const speed: number = 10;
         const outerDifference: number = 0.75// 外火花と内火花の距離の差の倍率
 
+        // 丸型火花を爆発させる関数
+        function burstNormalSparks(){
+
+        }
+
         setSparksObj(prevSparks => {
             const newSparks: Spark[] = prevSparks[id].map(spark => {
                 // 火花の最終位置を計算する
@@ -473,9 +478,7 @@ export default function App(){
                 id="canvas"
                 className="bg-img-transparent"
                 ref={canvasRef}
-                // width={300 * config.widthMagnification + 20}
-                // height={320}
-                width={500}
+                width={500 * config.widthMagnification}
                 height={500}
                 style={{
                     border: "black 1px solid"
