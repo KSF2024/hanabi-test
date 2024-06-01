@@ -19,6 +19,7 @@ type Spark = {
     alpha: number;
     x: number;
     y: number;
+    standardRadius: number;
     radius: number;
     direction: number;
     movementType: 0 | 1 | 2; // 火花の動き(0: 停止, 1: 内丸, 2: 外丸)
@@ -27,7 +28,7 @@ type Spark = {
 
 const config = {
     color: "red",
-    sparkType: 0,
+    sparkType: 1,
     widthMagnification: 1
 }
 
@@ -174,6 +175,7 @@ export default function App(){
             case 2: // 雫型
                 break;
             case 1: // 線型
+                generateLineSparks();
                 break;
             case 0: // 丸型
             default:
@@ -189,26 +191,49 @@ export default function App(){
                     alpha: 255,
                     x: initialX,
                     y: initialY,
+                    standardRadius,
                     radius: standardRadius,
                     direction,
                     movementType: 2,
-                    sparkType: sparkType as 0 | 1 | 2
+                    sparkType: 0
                 };
                 const newInnerSpark: Spark = {
                     color,
                     alpha: 255,
                     x: initialX,
                     y: initialY,
+                    standardRadius,
                     radius: standardRadius * 0.9,
                     direction,
                     movementType: 1,
-                    sparkType: sparkType as 0 | 1 | 2
+                    sparkType: 1
                 };
 
                 result.push(newOuterSpark);
                 result.push(newInnerSpark);
             }
         }
+
+            // 線型の火花を生成する関数
+    function generateLineSparks(){
+        for(let i: number = 0; i < amount; i++){
+            const direction: number = ((360 / amount) * i) / Math.PI; // 火花の向き(ラジアン)
+            const newSpark: Spark = {
+                color,
+                alpha: 255,
+                x: initialX,
+                y: initialY,
+                standardRadius,
+                radius: standardRadius,
+                direction,
+                movementType: 2,
+                sparkType: 2
+            };
+            result.push(newSpark);
+        }
+
+        return result;
+    }
 
         return result;
     }
@@ -228,12 +253,8 @@ export default function App(){
         const speed: number = 10;
         const outerDifference: number = 0.75// 外火花と内火花の距離の差の倍率
 
-        // 丸型火花を爆発させる関数
-        function burstNormalSparks(){
-
-        }
-
         setSparksObj(prevSparks => {
+            const afterImageSparks: Spark[] = []; // 火花の残像
             const newSparks: Spark[] = prevSparks[id].map(spark => {
                 // 火花の最終位置を計算する
                 const fireworkSize = fireworkSizeObj[id];
@@ -273,7 +294,7 @@ export default function App(){
                 return newSpark;
             });
 
-            return {...prevSparks, [id]: newSparks};
+            return {...prevSparks, [id]: [...newSparks, ...afterImageSparks]};
         });
 
         if(isFinishedSparksAnimationObj.current[id]){
