@@ -29,7 +29,7 @@ type Spark = {
 const config = {
     color: "red",
     sparkType: 2,
-    widthMagnification: 1
+    widthMagnification: 2
 }
 
 export default function App(){
@@ -340,9 +340,7 @@ export default function App(){
                     }
                 }else if(spark.sparkType === 2){
                     // 雫型火花を残像を追加する
-                    const dropDifference: number = outerDifference;
-                    console.log(dropDifference)
-                    const innerDistance: number = goalDistance * dropDifference; // 内側の距離
+                    const innerDistance: number = goalDistance * outerDifference; // 内側の距離
                     if(prevDistance > goalDistance * outerDifference){
                         // 残像火花の太さを算出する関数
                         function calculateRadius(distance: number): number{
@@ -355,7 +353,7 @@ export default function App(){
                         let afterImageLength: number = 0;
                         while(speed >= afterImageLength){
                             const newDistance: number = prevDistance + afterImageLength;
-                            const newRadius: number = Math.max(calculateRadius(newDistance), spark.standardRadius * 0.1);
+                            const newRadius: number = Math.max(calculateRadius(newDistance), spark.standardRadius * 0.2);
                             if(newRadius <= 0) break;
                             const newDx: number = Math.cos(spark.direction + launchAngle) * afterImageLength;
                             const newDy: number = Math.sin(spark.direction + launchAngle) * afterImageLength;
