@@ -289,7 +289,7 @@ export default function App(){
 
     /* 花火&火花用共通関数定義 */
     // 花火と火花が消えていくアニメーション
-    function fadeFireworks(id: string){
+    function fadeFireworksAndSparks(id: string){
         if(!starsRef.current[id]) return;
         const speed: number = 10;
 
@@ -334,7 +334,7 @@ export default function App(){
             return;
         }else{
             // 次のフレームを要求
-            const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworks(id));
+            const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworksAndSparks(id));
             setFireworksAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
         }
     }
@@ -488,7 +488,7 @@ export default function App(){
                     <button
                         onClick={() => {
                             // アニメーションを開始
-                            const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworks(id));
+                            const newAnimationFrameId: number = requestAnimationFrame(() => fadeFireworksAndSparks(id));
                             setFireworksAnimationFrameIdObj(prev => ({...prev, [id]: newAnimationFrameId}));
                             isFinishedFireworksAnimationObj.current[id] = false;
                         }}
