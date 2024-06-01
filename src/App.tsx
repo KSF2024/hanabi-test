@@ -28,7 +28,7 @@ type Spark = {
 
 const config = {
     color: "red",
-    sparkType: 1,
+    sparkType: 0,
     widthMagnification: 1
 }
 
@@ -113,8 +113,8 @@ export default function App(){
             // 新しいスターの位置を計算して更新
             const updatedStars = prevStars[id].map((star, index) => {
                 const renderingStar: Star = renderingStars[index];
-                const renderingX: number = renderingStar.x - fireworkSizeObj[id].width / 2 + initialX
-                const renderingY: number = renderingStar.y - fireworkSizeObj[id].height / 2 + initialY
+                const renderingX: number = renderingStar.x - fireworkSizeObj[id].width / 2 + initialX;
+                const renderingY: number = renderingStar.y - fireworkSizeObj[id].height / 2 + initialY;
 
                 /* ここを改変することで、花火のモーションを変更できる */
                 const dx: number = (renderingX - star.x) / speed;
@@ -128,8 +128,8 @@ export default function App(){
             // 加速度が0に近づいたら、アニメーションを停止する
             isFinishedFireworksAnimationObj.current[id] = prevStars[id].every((star, index) => {
                 const renderingStar: Star = renderingStars[index];
-                const renderingX: number = renderingStar.x - fireworkSizeObj[id].width / 2 + initialX
-                const renderingY: number = renderingStar.y - fireworkSizeObj[id].height / 2 + initialY
+                const renderingX: number = renderingStar.x - fireworkSizeObj[id].width / 2 + initialX;
+                const renderingY: number = renderingStar.y - fireworkSizeObj[id].height / 2 + initialY;
                 const dx: number = (renderingX - star.x) / speed;
                 const dy: number = (renderingY - star.y) / speed;
                 return (Math.abs(dx) < 1 && Math.abs(dy) < 1);
@@ -173,6 +173,7 @@ export default function App(){
         // 火花データを生成する
         switch(sparkType){
             case 2: // 雫型
+                generateDropSparks();
                 break;
             case 1: // 線型
                 generateLineSparks();
@@ -206,7 +207,7 @@ export default function App(){
                     radius: standardRadius * 0.9,
                     direction,
                     movementType: 1,
-                    sparkType: 1
+                    sparkType: 0
                 };
 
                 result.push(newOuterSpark);
@@ -214,26 +215,47 @@ export default function App(){
             }
         }
 
-            // 線型の火花を生成する関数
-    function generateLineSparks(){
-        for(let i: number = 0; i < amount; i++){
-            const direction: number = ((360 / amount) * i) / Math.PI; // 火花の向き(ラジアン)
-            const newSpark: Spark = {
-                color,
-                alpha: 255,
-                x: initialX,
-                y: initialY,
-                standardRadius: standardRadius * 0.5,
-                radius: standardRadius,
-                direction,
-                movementType: 2,
-                sparkType: 1
-            };
-            result.push(newSpark);
+        // 線型の火花を生成する関数
+        function generateLineSparks(){
+            for(let i: number = 0; i < amount; i++){
+                const direction: number = ((360 / amount) * i) / Math.PI; // 火花の向き(ラジアン)
+                const newSpark: Spark = {
+                    color,
+                    alpha: 255,
+                    x: initialX,
+                    y: initialY,
+                    standardRadius: standardRadius * 0.5,
+                    radius: standardRadius,
+                    direction,
+                    movementType: 2,
+                    sparkType: 1
+                };
+                result.push(newSpark);
+            }
+
+            return result;
         }
 
-        return result;
-    }
+        // 雫型の火花を生成する関数
+        function generateDropSparks(){
+            for(let i: number = 0; i < amount; i++){
+                const direction: number = ((360 / amount) * i) / Math.PI; // 火花の向き(ラジアン)
+                const newSpark: Spark = {
+                    color,
+                    alpha: 255,
+                    x: initialX,
+                    y: initialY,
+                    standardRadius,
+                    radius: standardRadius,
+                    direction,
+                    movementType: 2,
+                    sparkType: 1
+                };
+                result.push(newSpark);
+            }
+
+            return result;
+        }
 
         return result;
     }
@@ -316,12 +338,14 @@ export default function App(){
                             afterImageLength += newRadius;
                         }
                     }
+                }else if(spark.sparkType === 2){
+                    // 雫型火花を残像を追加する
                 }
 
-                const newSpark: Spark = {...spark, x: newX, y: newY, radius: 0};
+                const newRadius: number = (spark.sparkType === 0) ? spark.radius : 0;
+                const newSpark: Spark = {...spark, x: newX, y: newY, radius: newRadius};
                 return newSpark;
             });
-
             return {...prevSparks, [id]: [...newSparks, ...afterImageSparks]};
         });
 
