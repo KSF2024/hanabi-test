@@ -28,7 +28,7 @@ type Spark = {
 
 const config = {
     color: "red",
-    sparkType: 0,
+    sparkType: 2,
     widthMagnification: 1
 }
 
@@ -249,7 +249,7 @@ export default function App(){
                     radius: standardRadius,
                     direction,
                     movementType: 2,
-                    sparkType: 1
+                    sparkType: 2
                 };
                 result.push(newSpark);
             }
@@ -273,7 +273,7 @@ export default function App(){
     // 火花を爆発させるアニメーション
     function burstSparks(id: string, initialX: number, initialY: number){
         const speed: number = 10;
-        const outerDifference: number = 0.75// 外火花と内火花の距離の差の倍率
+        const outerDifference: number = 0.75; // 外火花と内火花の距離の差の倍率
 
         setSparksObj(prevSparks => {
             const afterImageSparks: Spark[] = []; // 火花の残像
@@ -333,13 +333,39 @@ export default function App(){
                             const newDy: number = Math.sin(spark.direction + launchAngle) * afterImageLength;
                             let newX: number = spark.x + newDx;
                             let newY: number = spark.y + newDy;
-                            const newAfterImageSpark: Spark = {...spark, movementType: 0, x: newX, y: newY, radius: newRadius, };
+                            const newAfterImageSpark: Spark = {...spark, movementType: 0, x: newX, y: newY, radius: newRadius};
                             afterImageSparks.push(newAfterImageSpark);
                             afterImageLength += newRadius;
                         }
                     }
                 }else if(spark.sparkType === 2){
                     // 雫型火花を残像を追加する
+                    const dropDifference: number = outerDifference;
+                    console.log(dropDifference)
+                    const innerDistance: number = goalDistance * dropDifference; // 内側の距離
+                    if(prevDistance > goalDistance * outerDifference){
+                        // 残像火花の太さを算出する関数
+                        function calculateRadius(distance: number): number{
+                            const distanceAchievement: number =  (distance - innerDistance) / (goalDistance - innerDistance); // 火花の目標位置への達成度
+                            const radiusMagnification: number = distanceAchievement // 火花の太さの倍率
+                            const newRadius: number = spark.standardRadius * radiusMagnification;
+                            return newRadius;
+                        }
+
+                        let afterImageLength: number = 0;
+                        while(speed >= afterImageLength){
+                            const newDistance: number = prevDistance + afterImageLength;
+                            const newRadius: number = Math.max(calculateRadius(newDistance), spark.standardRadius * 0.1);
+                            if(newRadius <= 0) break;
+                            const newDx: number = Math.cos(spark.direction + launchAngle) * afterImageLength;
+                            const newDy: number = Math.sin(spark.direction + launchAngle) * afterImageLength;
+                            let newX: number = spark.x + newDx;
+                            let newY: number = spark.y + newDy;
+                            const newAfterImageSpark: Spark = {...spark, movementType: 0, x: newX, y: newY, radius: newRadius};
+                            afterImageSparks.push(newAfterImageSpark);
+                            afterImageLength += newRadius;
+                        }
+                    }
                 }
 
                 const newRadius: number = (spark.sparkType === 0) ? spark.radius : 0;
