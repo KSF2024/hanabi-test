@@ -305,7 +305,7 @@ export default function App(){
                         let afterImageLength: number = 0;
                         while(speed >= afterImageLength){
                             const newDistance: number = prevDistance + afterImageLength;
-                            const newRadius: number = calculateRadius(newDistance);
+                            const newRadius: number = Math.max(calculateRadius(newDistance), spark.standardRadius * 0.5);
                             if(newRadius <= 0) break;
                             const newDx: number = Math.cos(spark.direction + launchAngle) * afterImageLength;
                             const newDy: number = Math.sin(spark.direction + launchAngle) * afterImageLength;
@@ -314,7 +314,6 @@ export default function App(){
                             const newAfterImageSpark: Spark = {...spark, movementType: 0, x: newX, y: newY, radius: newRadius, };
                             afterImageSparks.push(newAfterImageSpark);
                             afterImageLength += newRadius;
-                            console.log(newRadius)
                         }
                     }
                 }
