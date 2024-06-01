@@ -184,7 +184,6 @@ export default function App(){
         function generateNormalSparks(){
             for(let i: number = 0; i < amount; i++){
                 const direction: number = ((360 / amount) * i) / Math.PI; // 火花の向き(ラジアン)
-                console.log("direction: ", direction)
                 const newOuterSpark: Spark = {
                     color,
                     alpha: 255,
@@ -251,8 +250,8 @@ export default function App(){
                 }
 
                 // 新しい火花の位置を計算する
-                const dx: number = Math.cos(spark.direction) * speed;
-                const dy: number = Math.sin(spark.direction) * speed;
+                const dx: number = Math.cos(spark.direction + launchAngle) * speed;
+                const dy: number = Math.sin(spark.direction + launchAngle) * speed;
                 let newX: number = spark.x + dx;
                 let newY: number = spark.y + dy;
 
