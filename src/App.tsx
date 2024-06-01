@@ -288,7 +288,7 @@ export default function App(){
     }
 
     /* 花火&火花用共通関数定義 */
-    // 花火が消えていくアニメーション
+    // 花火と火花が消えていくアニメーション
     function fadeFireworks(id: string){
         if(!starsRef.current[id]) return;
         const speed: number = 10;
@@ -306,6 +306,22 @@ export default function App(){
             })
 
             const result = {...prevStars, [id]: updatedStars};
+            return result;
+        });
+
+        setSparksObj((prevSparks) => {
+            // 新しい火花の透明度を計算して更新
+            const updatedStars = prevSparks[id].map((spark) => {
+                const newAlpha: number = Math.max(Math.round(spark.alpha - speed), 0); // 透明度が負にならないようにする
+                return {...spark, alpha: newAlpha};
+            });
+
+            isFinishedSparksAnimationObj.current[id] = prevSparks[id].every((sparks) => {
+                // 全ての火花の透明度が0以下になったらアニメーションを停止
+                return sparks.alpha <= 0;
+            })
+
+            const result = {...prevSparks, [id]: updatedStars};
             return result;
         });
 
