@@ -223,11 +223,11 @@ export default function App(){
                 alpha: 255,
                 x: initialX,
                 y: initialY,
-                standardRadius,
+                standardRadius: standardRadius * 0.5,
                 radius: standardRadius,
                 direction,
                 movementType: 2,
-                sparkType: 2
+                sparkType: 1
             };
             result.push(newSpark);
         }
@@ -290,7 +290,36 @@ export default function App(){
                     newY = goalY;
                 }
 
-                const newSpark: Spark = {...spark, x: newX, y: newY};
+                if(spark.sparkType === 1){
+                    // 線型火花の残像を追加する
+                    const innerDistance: number = goalDistance * outerDifference; // 内側の距離
+                    if(prevDistance > goalDistance * outerDifference){
+                        // 残像火花の太さを算出する関数
+                        function calculateRadius(distance: number): number{
+                            const distanceAchievement: number =  (distance - innerDistance) / (goalDistance - innerDistance); // 火花の目標位置への達成度
+                            const radiusMagnification: number = -4 * distanceAchievement * (distanceAchievement - 1) // 火花の太さの倍率
+                            const newRadius: number = spark.standardRadius * radiusMagnification;
+                            return newRadius;
+                        }
+
+                        let afterImageLength: number = 0;
+                        while(speed >= afterImageLength){
+                            const newDistance: number = prevDistance + afterImageLength;
+                            const newRadius: number = calculateRadius(newDistance);
+                            if(newRadius <= 0) break;
+                            const newDx: number = Math.cos(spark.direction + launchAngle) * afterImageLength;
+                            const newDy: number = Math.sin(spark.direction + launchAngle) * afterImageLength;
+                            let newX: number = spark.x + newDx;
+                            let newY: number = spark.y + newDy;
+                            const newAfterImageSpark: Spark = {...spark, movementType: 0, x: newX, y: newY, radius: newRadius, };
+                            afterImageSparks.push(newAfterImageSpark);
+                            afterImageLength += newRadius;
+                            console.log(newRadius)
+                        }
+                    }
+                }
+
+                const newSpark: Spark = {...spark, x: newX, y: newY, radius: 0};
                 return newSpark;
             });
 
