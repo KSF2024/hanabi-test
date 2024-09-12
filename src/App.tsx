@@ -27,9 +27,9 @@ type Spark = {
 }
 
 const config = {
-    color: "red",
-    sparkType: 2,
-    widthMagnification: 2
+    color: "#FF0000",
+    sparkType: 0,
+    widthMagnification: 1
 }
 
 export default function App(){
@@ -37,6 +37,9 @@ export default function App(){
     const [imageSrc, setImageSrc]= useState<string[]>((config.widthMagnification > 1)? [testImage, testImage2] : [testImage]);
     const [imageDataObj, setImageDataObj] = useState<{[id: string]: ImageData}>({}); // 読み込む画像データ
     const canvasRef = useRef<HTMLCanvasElement>(null); // アニメーション用Canvas要素の参照
+
+    const [color, setColor] = useState<string>(config.color);
+    const [sparkType, setSparkType] = useState<number>(config.sparkType);
 
     const starsRef = useRef<{[id: string]: Star[]}>({}); // 花火の星(アニメーション完了後の位置)
     const [starsObj, setStarsObj] = useState<{[id: string]: Star[]}>({}); // 花火の星(アニメーション用)
@@ -478,7 +481,7 @@ export default function App(){
         setStarsObj(prev => ({ ...prev, [id]: initializedStars }));
 
         // 火花データを作成し、stateに保存する
-        const newSparks: Spark[] = generateSparks(config.sparkType, config.color, initialX, initialY);
+        const newSparks: Spark[] = generateSparks(sparkType, color, initialX, initialY);
         setSparksObj(prev => ({...prev, [id]: newSparks}));
 
         // 花火アニメーションを開始
@@ -514,7 +517,7 @@ export default function App(){
         return () => {
             setImageDataObj({});
         }
-    }, [imageSrc]);
+    }, [imageSrc, sparkType, color]);
 
     // 花火IDの用意とimageDataの取得が出来たら、花火の星を作成して、花火アニメーションを開始する
     useEffect(() => {
@@ -600,17 +603,45 @@ export default function App(){
                 <br/>
                 </Fragment>
             ))}
+            <div>
+                <label>
+                    火花の色:
+                    <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                    />
+                </label>
+            </div>
+            <div>
             <label>
-                打ち上げ角度: 
-                <input 
-                    type="number" 
-                    value={launchAngle} 
-                    onChange={(e) => setLaunchAngle(Number(e.target.value))} 
-                    min="0" 
-                    max="180" 
+                火花の種類:
+                <input
+                    type="number"
+                    value={sparkType}
+                    onChange={(e) => setSparkType(prev => {
+                        const num: number = Number(e.target.value)
+                        if(Number.isNaN(num)) return prev
+                        if(num === 3) return 0
+                        if(num > 2) return 2
+                        if(num < 0) return 2
+                        return num
+                    })}
                 />
             </label>
-            <br/>
+            </div>
+            <div>
+                <label>
+                    打ち上げ角度: 
+                    <input 
+                        type="number" 
+                        value={launchAngle} 
+                        onChange={(e) => setLaunchAngle(Number(e.target.value))}
+                        min="0" 
+                        max="180" 
+                    />
+                </label>
+            </div>
             <br/>
             {imageSrc.map((_value, index) => (
                 <input
