@@ -616,18 +616,14 @@ export default function App(){
             <div>
             <label>
                 火花の種類:
-                <input
-                    type="number"
+                <select
                     value={sparkType}
-                    onChange={(e) => setSparkType(prev => {
-                        const num: number = Number(e.target.value)
-                        if(Number.isNaN(num)) return prev
-                        if(num === 3) return 0
-                        if(num > 2) return 2
-                        if(num < 0) return 2
-                        return num
-                    })}
-                />
+                    onChange={e => setSparkType(Number(e.target.value))}
+                >
+                <option value="0">丸型</option>
+                <option value="1">線型</option>
+                <option value="2">雫型</option>
+                </select>
             </label>
             </div>
             <div>
